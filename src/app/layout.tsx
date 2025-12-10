@@ -1,16 +1,12 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // O la fuente que uses
+import { Inter } from "next/font/google"; // O la fuente que estés usando
 import "./globals.css";
-
-// 1. IMPORTA TU COMPONENTE
-import AuthInitializer from "../components/auth/AuthInitializer"; 
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Dashboard Administrativo",
-  description: "Panel de control",
+  title: "Admin Dashboard",
+  description: "Panel administrativo de Universitas Services",
 };
 
 export default function RootLayout({
@@ -21,9 +17,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        {/* 2. COLÓCALO AQUÍ, DENTRO DEL BODY PERO ANTES DE CHILDREN */}
-        <AuthInitializer />
-        
+        {/* Aquí ya NO va el AuthInitializer.
+            El store (useAuthStore) recuperará la sesión automáticamente 
+            cuando cualquier componente intente usarla.
+        */}
         {children}
       </body>
     </html>
