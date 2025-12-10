@@ -1,9 +1,9 @@
 // src/lib/axios.ts
 import axios from 'axios';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { getAccessToken, getRefreshToken } from '@/lib/authStorage';
+import { useAuthStore } from '../stores/useAuthStore';
+import { refreshToken as apiRefreshToken } from '../services/authService'; // Renombrado para evitar confusión
+import { getAccessToken, getRefreshToken } from '../lib/authStorage';
 
-// Asegúrate de tener esta variable en tu .env.local: NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const axiosPublic = axios.create({
@@ -13,86 +13,122 @@ export const axiosPublic = axios.create({
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' }, 
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// --- Interceptor de Request: Inyectar Token ---
+// --- INTERCEPTOR DE SOLICITUD (Sin cambios) ---
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+    const accessToken = getAccessToken(); // Siempre obtiene el token más fresco
+
+    // --- CORRECCIÓN ---
+    // Eliminamos la condición '!config.headers['Authorization']'.
+    // Debemos *siempre* sobrescribir la cabecera con el token más reciente
+    // que tengamos en localStorage. Esto es crucial para los "reintentos"
+    // después de un refresco de token.
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
+    // --- FIN CORRECCIÓN ---
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// --- Lógica de Refresh Token (Anti-Race Condition) ---
+// --- LÓGICA DE REFRESH MEJORADA (Anti-Race-Condition) ---
+
+// Variable para rastrear si ya hay un refresh en progreso
 let isRefreshing = false;
+// Array para almacenar las peticiones fallidas mientras se refresca
 let failedQueue: Array<{
-  resolve: (value: unknown) => void;
-  reject: (reason?: any) => void;
+  resolve: (value: string) => void;
+  reject: (reason?: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+// Función para procesar la cola de peticiones
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
-    } else {
+    } else if (token) {
+      // Añadimos un check por si el token es null
       prom.resolve(token);
+    } else {
+      prom.reject(new Error('No token provided on success'));
     }
   });
   failedQueue = [];
 };
 
+// --- INTERCEPTOR DE RESPUESTA ---
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => response, // Si todo bien, dejamos pasar la respuesta
   async (error) => {
     const originalRequest = error.config;
+    const { logout, setTokens } = useAuthStore.getState();
 
-    // Si es 401 (No autorizado) y no es un reintento
+    // Si el error es 401 y no es un reintento
     if (error.response?.status === 401 && !originalRequest._retry) {
-      
-      // Si ya se está refrescando, encolar la petición
+      // Si ya hay un refresh en progreso, no inicies uno nuevo.
+      // En su lugar, "encola" esta petición fallida.
       if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
+        return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
+          .then((token: string) => {
             originalRequest.headers['Authorization'] = 'Bearer ' + token;
             return apiClient(originalRequest);
           })
-          .catch((err) => Promise.reject(err));
+          .catch((err: unknown) => {
+            return Promise.reject(err);
+          });
       }
 
+      // Si no hay refresh en progreso, iniciamos uno.
       originalRequest._retry = true;
-      isRefreshing = true;
+      isRefreshing = true; // Marcar que estamos refrescando
 
-      try {
-        const refreshToken = getRefreshToken();
-        // NOTA: Aquí asumimos que tu endpoint de refresh es /auth/refresh
-        // Ajusta la ruta según tu backend real
-        const { data } = await axiosPublic.post('/auth/refresh', { refreshToken }); 
-        
-        const { useAuthStore } = await import('@/stores/useAuthStore');
-        useAuthStore.getState().setTokens(data); // Guardar nuevos tokens
+      const currentRefreshToken = getRefreshToken();
+      if (currentRefreshToken) {
+        try {
+          // 1. Intentamos obtener nuevos tokens
+          const newTokens = await apiRefreshToken(currentRefreshToken);
 
-        apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + data.access_token;
-        originalRequest.headers['Authorization'] = 'Bearer ' + data.access_token;
+          // 2. Los guardamos en el store y localStorage
+          setTokens(newTokens);
 
-        processQueue(null, data.access_token);
-        return apiClient(originalRequest);
-      } catch (err) {
-        processQueue(err, null);
-        const { useAuthStore } = await import('@/stores/useAuthStore');
-        useAuthStore.getState().logout(); // Si falla el refresh, adiós sesión
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
+          // 3. Actualizamos la cabecera de la petición original
+          originalRequest.headers['Authorization'] =
+            `Bearer ${newTokens.access_token}`;
+
+          // 4. Procesamos la cola de peticiones (les damos el nuevo token)
+          processQueue(null, newTokens.access_token);
+
+          // 5. Reintentamos la petición original
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // Si el refresh token falla, deslogueamos
+          console.error('Refresh token fallido:', refreshError);
+
+          // 6. Procesamos la cola (les decimos que falló)
+          processQueue(refreshError, null);
+
+          logout(); // Desloguear
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false; // Ya no estamos refrescando
+        }
+      } else {
+        // No hay refresh token, deslogueamos
+        console.error('No refresh token, logging out.');
+        logout();
+        isRefreshing = false; // Asegurarse de resetear
+        return Promise.reject(error);
       }
     }
 
+    // Si no es un 401, o si ya es un reintento, rechazar
     return Promise.reject(error);
   }
 );

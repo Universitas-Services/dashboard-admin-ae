@@ -4,7 +4,7 @@ import { Inter } from "next/font/google"; // O la fuente que uses
 import "./globals.css";
 
 // 1. IMPORTA TU COMPONENTE
-import AuthInitializer from "@/components/auth/AuthInitializer"; 
+import AuthInitializer from "../components/auth/AuthInitializer"; 
 
 const inter = Inter({ subsets: ["latin"] });
 

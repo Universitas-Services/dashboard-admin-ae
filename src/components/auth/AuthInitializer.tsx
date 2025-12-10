@@ -2,7 +2,7 @@
 'use client'; // 👈 Esto es OBLIGATORIO para usar useEffect
 
 import { useEffect } from 'react';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useAuthStore } from '../../stores/useAuthStore';
 
 export default function AuthInitializer() {
   // Obtenemos la función del store.
