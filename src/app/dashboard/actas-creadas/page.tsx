@@ -12,11 +12,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge'; // Usamos Badge para el estatus
 import { FaEye } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
-import { FaTrashCan } from 'react-icons/fa6'; // <--- Importamos el nuevo icono solicitado
+import { FaTrashCan } from 'react-icons/fa6';
 
 import {
   Pagination,
@@ -27,70 +27,66 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
-type User = {
+// 1. DEFINICIÓN DE TIPOS
+type Acta = {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  isPro: boolean;
+  numeroActa: string;
+  nombreOrgano: string;
+  tipoActa: string;
+  estatus: 'Creada' | 'En Revisión' | 'Finalizada' | 'Anulada';
 };
 
-// 30 USUARIOS DE PRUEBA
-const initialUsers: User[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `U-${i + 1}`,
-  firstName: [
-    'Ana',
-    'Carlos',
-    'María',
-    'Pedro',
-    'Luisa',
-    'Jorge',
-    'Sofía',
-    'Andrés',
-    'Laura',
-    'Fernando',
-  ][i % 10],
-  lastName: [
-    'García',
-    'López',
-    'Rodriguez',
-    'Pérez',
-    'Fernández',
-    'Ramírez',
-    'Méndez',
-    'Castillo',
-    'Herrera',
-    'Vargas',
-  ][i % 10],
-  email: `usuario.${i + 1}@universitas.com`,
-  isPro: i % 3 === 0,
-}));
+// 2. DATOS DE PRUEBA (MOCK DATA) - 30 Registros
+const initialActas: Acta[] = Array.from({ length: 30 }, (_, i) => {
+  const estatusOptions: Acta['estatus'][] = [
+    'Creada',
+    'En Revisión',
+    'Finalizada',
+    'Anulada',
+  ];
+  const tiposOptions = ['Entrega', 'Recepción', 'Auditoría', 'Supervisión'];
+  const organosOptions = [
+    'Dirección de Finanzas',
+    'Recursos Humanos',
+    'Consultoría Jurídica',
+    'Despacho del Alcalde',
+    'Ingeniería Municipal',
+  ];
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  return {
+    id: `ACT-${2025000 + i}`,
+    numeroActa: `AE-${2025}-${(i + 1).toString().padStart(4, '0')}`,
+    nombreOrgano: organosOptions[i % organosOptions.length],
+    tipoActa: tiposOptions[i % tiposOptions.length],
+    estatus: estatusOptions[i % estatusOptions.length],
+  };
+});
+
+export default function ActasCreadasPage() {
+  const [actas, setActas] = useState<Acta[]>(initialActas);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const totalPages = Math.ceil(actas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentUsers = users.slice(startIndex, endIndex);
+  const currentActas = actas.slice(startIndex, endIndex);
 
   // -- LÓGICA DE SELECCIÓN --
   const isAllSelected =
-    currentUsers.length > 0 &&
-    currentUsers.every((user) => selectedRows.includes(user.id));
+    currentActas.length > 0 &&
+    currentActas.every((acta) => selectedRows.includes(acta.id));
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const newSelected = [
-        ...new Set([...selectedRows, ...currentUsers.map((u) => u.id)]),
+        ...new Set([...selectedRows, ...currentActas.map((a) => a.id)]),
       ];
       setSelectedRows(newSelected);
     } else {
-      const currentIds = currentUsers.map((u) => u.id);
+      const currentIds = currentActas.map((a) => a.id);
       setSelectedRows(selectedRows.filter((id) => !currentIds.includes(id)));
     }
   };
@@ -103,38 +99,17 @@ export default function UsersPage() {
     }
   };
 
-  // -- ACCIONES MASIVAS --
-
-  // 1. Cambio masivo de rol con Switch
-  const handleBulkRoleChange = (isPro: boolean) => {
-    setUsers(
-      users.map((user) =>
-        selectedRows.includes(user.id) ? { ...user, isPro } : user
-      )
-    );
-  };
-
-  // 2. Eliminación masiva
-  const handleBulkDelete = () => {
-    setUsers(users.filter((user) => !selectedRows.includes(user.id)));
-    setSelectedRows([]); // Limpiamos la selección después de borrar
-  };
-
-  // -- OTRAS FUNCIONES --
-  const toggleRole = (id: string) => {
-    setUsers(
-      users.map((user) =>
-        user.id === id ? { ...user, isPro: !user.isPro } : user
-      )
-    );
-  };
-
+  // -- ACCIONES --
   const handleDelete = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id));
-    // Si borramos uno seleccionado, lo quitamos de la lista de seleccionados
+    setActas(actas.filter((a) => a.id !== id));
     if (selectedRows.includes(id)) {
       setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
     }
+  };
+
+  const handleBulkDelete = () => {
+    setActas(actas.filter((a) => !selectedRows.includes(a.id)));
+    setSelectedRows([]);
   };
 
   const handlePageChange = (page: number) => {
@@ -143,71 +118,64 @@ export default function UsersPage() {
     }
   };
 
+  // Helper para color del Badge según estatus
+  const getBadgeVariant = (estatus: string) => {
+    switch (estatus) {
+      case 'Finalizada':
+        return 'default'; // Negro/Oscuro
+      case 'En Revisión':
+        return 'secondary'; // Gris claro
+      case 'Creada':
+        return 'outline'; // Borde
+      case 'Anulada':
+        return 'destructive'; // Rojo
+      default:
+        return 'default';
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full p-6">
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Panel de usuarios
-          </h2>
+          <h2 className="text-3xl font-bold tracking-tight">Actas Creadas</h2>
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground text-lg">
-              Mostrando {startIndex + 1}-{Math.min(endIndex, users.length)} de{' '}
-              {users.length} usuarios.
+              Mostrando {startIndex + 1}-{Math.min(endIndex, actas.length)} de{' '}
+              {actas.length} actas registradas.
             </p>
           </div>
         </div>
       </div>
 
-      {/* BARRA DE HERRAMIENTAS: Buscador (Izq) | Acciones Masivas (Der) */}
+      {/* BARRA DE HERRAMIENTAS */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 my-4">
         {/* Buscador */}
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar por nombre o email..."
+            placeholder="Buscar por número o órgano..."
             className="pl-10 py-6 text-lg"
           />
         </div>
 
-        {/* Acciones Masivas (Solo visibles si hay seleccionados) */}
+        {/* Acciones Masivas */}
         {selectedRows.length > 0 && (
           <div className="flex items-center gap-6 animate-in fade-in slide-in-from-right-5">
-            {/* Contador de seleccionados */}
             <span className="text-sm font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
-              {selectedRows.length} seleccionados
+              {selectedRows.length} seleccionadas
             </span>
 
-            {/* Separador vertical */}
             <div className="h-8 w-[1px] bg-border" />
 
-            {/* Acción 1: Switch Masivo */}
-            <div className="flex items-center gap-3 bg-card border rounded-lg px-4 py-2 shadow-sm">
-              <span className="text-sm font-medium text-muted-foreground">
-                Cambiar selección a:
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-foreground">
-                  Express
-                </span>
-                <Switch
-                  // Usamos un estado "neutro" visualmente, o basado en si todos son Pro
-                  // Al hacer clic, forzamos el cambio a Pro o Express
-                  onCheckedChange={(checked) => handleBulkRoleChange(checked)}
-                />
-                <span className="text-sm font-bold text-blue-600">Pro</span>
-              </div>
-            </div>
-
-            {/* Acción 2: Eliminar Masivo */}
             <Button
               variant="destructive"
               size="icon"
               className="h-10 w-10 shadow-sm"
               onClick={handleBulkDelete}
-              title="Eliminar usuarios seleccionados"
+              title="Eliminar actas seleccionadas"
             >
               <FaTrashCan className="h-5 w-5" />
             </Button>
@@ -215,7 +183,7 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* TABLA */}
+      {/* TABLA DE ACTAS */}
       <div className="rounded-lg border shadow-sm bg-card">
         <Table>
           <TableHeader>
@@ -229,61 +197,48 @@ export default function UsersPage() {
                 />
               </TableHead>
 
-              <TableHead className="text-lg py-4">Nombre</TableHead>
-              <TableHead className="text-lg py-4">Apellido</TableHead>
-              <TableHead className="text-lg py-4">Email</TableHead>
-              <TableHead className="text-lg py-4 text-center">
-                Rol / Plan
-              </TableHead>
+              <TableHead className="text-lg py-4">Número de Acta</TableHead>
+              <TableHead className="text-lg py-4">Nombre del Órgano</TableHead>
+              <TableHead className="text-lg py-4">Tipo de Acta</TableHead>
+              <TableHead className="text-lg py-4">Estatus</TableHead>
               <TableHead className="text-lg py-4 text-center pr-6">
                 Opciones
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentUsers.map((user) => {
-              const isSelected = selectedRows.includes(user.id);
+            {currentActas.map((acta) => {
+              const isSelected = selectedRows.includes(acta.id);
               return (
                 <TableRow
-                  key={user.id}
+                  key={acta.id}
                   className={`text-base transition-colors ${isSelected ? 'bg-blue-50/50 hover:bg-blue-50/70' : 'hover:bg-muted/30'}`}
                 >
                   <TableCell className="pl-6 py-4">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(checked) =>
-                        handleSelectRow(user.id, checked as boolean)
+                        handleSelectRow(acta.id, checked as boolean)
                       }
                     />
                   </TableCell>
 
                   <TableCell className="font-medium py-4">
-                    {user.firstName}
-                  </TableCell>
-                  <TableCell className="font-medium py-4">
-                    {user.lastName}
+                    {acta.numeroActa}
                   </TableCell>
                   <TableCell className="py-4 text-muted-foreground">
-                    {user.email}
+                    {acta.nombreOrgano}
                   </TableCell>
+                  <TableCell className="py-4">{acta.tipoActa}</TableCell>
 
+                  {/* Columna Estatus con Badge */}
                   <TableCell className="py-4">
-                    <div className="flex items-center justify-center gap-4">
-                      <span
-                        className={`text-base ${!user.isPro ? 'font-bold text-foreground' : 'text-muted-foreground'}`}
-                      >
-                        Express
-                      </span>
-                      <Switch
-                        checked={user.isPro}
-                        onCheckedChange={() => toggleRole(user.id)}
-                      />
-                      <span
-                        className={`text-base ${user.isPro ? 'font-bold text-blue-600' : 'text-muted-foreground'}`}
-                      >
-                        Pro
-                      </span>
-                    </div>
+                    <Badge
+                      variant={getBadgeVariant(acta.estatus)}
+                      className="text-sm px-3 py-1"
+                    >
+                      {acta.estatus}
+                    </Badge>
                   </TableCell>
 
                   <TableCell className="py-4 pr-6">
@@ -299,7 +254,7 @@ export default function UsersPage() {
                         variant="ghost"
                         size="icon"
                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => handleDelete(acta.id)}
                       >
                         <MdDelete className="h-5 w-5" />
                       </Button>
@@ -311,6 +266,7 @@ export default function UsersPage() {
           </TableBody>
         </Table>
 
+        {/* Paginación */}
         <div className="py-4 border-t">
           <Pagination>
             <PaginationContent>
@@ -326,6 +282,7 @@ export default function UsersPage() {
                   }
                 />
               </PaginationItem>
+
               {Array.from({ length: totalPages }).map((_, index) => (
                 <PaginationItem key={index}>
                   <PaginationLink
@@ -340,6 +297,7 @@ export default function UsersPage() {
                   </PaginationLink>
                 </PaginationItem>
               ))}
+
               <PaginationItem>
                 <PaginationNext
                   href="#"
