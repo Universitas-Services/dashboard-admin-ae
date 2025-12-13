@@ -12,8 +12,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 import { FaEye } from "react-icons/fa"
 import { MdDelete } from "react-icons/md"
 import { FaTrashCan } from "react-icons/fa6"
@@ -27,53 +27,71 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 
-type User = {
+// 1. TIPOS
+type Acta = {
   id: string
-  firstName: string
-  lastName: string
-  email: string
-  isPro: boolean
+  numeroActa: string
+  nombreOrgano: string
+  rif: string
+  tipoActa: string
+  estatus: "Creada" | "En Revisión" | "Finalizada" | "Anulada"
+  lapsos: string
+  moratoria: string
 }
 
-// 30 USUARIOS DE PRUEBA
-const initialUsers: User[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `U-${i + 1}`,
-  firstName: ["Ana", "Carlos", "María", "Pedro", "Luisa", "Jorge", "Sofía", "Andrés", "Laura", "Fernando"][i % 10],
-  lastName: ["García", "López", "Rodriguez", "Pérez", "Fernández", "Ramírez", "Méndez", "Castillo", "Herrera", "Vargas"][i % 10],
-  email: `usuario.${i + 1}@universitas.com`,
-  isPro: i % 3 === 0,
-}))
+// 2. DATOS DE PRUEBA (MOCK DATA)
+const initialActas: Acta[] = Array.from({ length: 30 }, (_, i) => {
+  const estatusOptions: Acta['estatus'][] = ["Creada", "En Revisión", "Finalizada", "Anulada"]
+  const tiposOptions = ["Entrega", "Recepción", "Auditoría", "Supervisión"]
+  const organosOptions = ["Dirección de Finanzas", "Recursos Humanos", "Consultoría Jurídica", "Despacho del Alcalde", "Ingeniería Municipal"]
+  
+  const diasMora = i % 5 === 0 ? Math.floor(Math.random() * 20) + 1 : 0
+  
+  return {
+    id: `ACT-${2025000 + i}`,
+    numeroActa: `AE-${2025}-${(i + 1).toString().padStart(4, '0')}`,
+    nombreOrgano: organosOptions[i % organosOptions.length],
+    rif: `G-2000${(i + 100).toString()}-1`,
+    tipoActa: tiposOptions[i % tiposOptions.length],
+    estatus: estatusOptions[i % estatusOptions.length],
+    lapsos: "120 días hábiles",
+    moratoria: diasMora > 0 ? `${diasMora} días` : "Al día",
+  }
+})
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>(initialUsers)
-  const [searchTerm, setSearchTerm] = useState("") // Estado del buscador
+export default function ActasCreadasPage() {
+  const [actas, setActas] = useState<Acta[]>(initialActas)
+  const [searchTerm, setSearchTerm] = useState("") // Estado para el buscador
   const [selectedRows, setSelectedRows] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   
   const itemsPerPage = 10
 
   // -- LÓGICA DE FILTRADO --
-  const filteredUsers = users.filter((user) => 
-    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtramos la lista COMPLETA basándonos en el término de búsqueda
+  const filteredActas = actas.filter((acta) => 
+    acta.numeroActa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    acta.nombreOrgano.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    acta.rif.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // -- LÓGICA DE PAGINACIÓN (Sobre los resultados filtrados) --
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+  // -- LÓGICA DE PAGINACIÓN (Basada en los resultados FILTRADOS) --
+  const totalPages = Math.ceil(filteredActas.length / itemsPerPage)
+  
+  // Aseguramos que si filtramos y la pagina actual excede el total, no rompa
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentUsers = filteredUsers.slice(startIndex, endIndex)
+  const currentActas = filteredActas.slice(startIndex, endIndex)
 
-  // -- LÓGICA DE SELECCIÓN --
-  const isAllSelected = currentUsers.length > 0 && currentUsers.every((user) => selectedRows.includes(user.id))
+  // -- SELECCIÓN --
+  const isAllSelected = currentActas.length > 0 && currentActas.every((acta) => selectedRows.includes(acta.id))
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const newSelected = [...new Set([...selectedRows, ...currentUsers.map(u => u.id)])]
+      const newSelected = [...new Set([...selectedRows, ...currentActas.map(a => a.id)])]
       setSelectedRows(newSelected)
     } else {
-      const currentIds = currentUsers.map(u => u.id)
+      const currentIds = currentActas.map(a => a.id)
       setSelectedRows(selectedRows.filter(id => !currentIds.includes(id)))
     }
   }
@@ -86,30 +104,17 @@ export default function UsersPage() {
     }
   }
 
-  // -- ACCIONES MASIVAS --
-  const handleBulkRoleChange = (isPro: boolean) => {
-    setUsers(users.map(user => 
-      selectedRows.includes(user.id) ? { ...user, isPro } : user
-    ))
-  }
-
-  const handleBulkDelete = () => {
-    setUsers(users.filter(user => !selectedRows.includes(user.id)))
-    setSelectedRows([])
-  }
-
-  // -- OTRAS FUNCIONES --
-  const toggleRole = (id: string) => {
-    setUsers(users.map(user => 
-      user.id === id ? { ...user, isPro: !user.isPro } : user
-    ))
-  }
-
+  // -- ACCIONES --
   const handleDelete = (id: string) => {
-    setUsers(users.filter(user => user.id !== id))
+    setActas(actas.filter(a => a.id !== id))
     if (selectedRows.includes(id)) {
       setSelectedRows(selectedRows.filter(rowId => rowId !== id))
     }
+  }
+
+  const handleBulkDelete = () => {
+    setActas(actas.filter(a => !selectedRows.includes(a.id)))
+    setSelectedRows([])
   }
 
   const handlePageChange = (page: number) => {
@@ -118,21 +123,29 @@ export default function UsersPage() {
     }
   }
 
+  const getBadgeVariant = (estatus: string) => {
+    switch (estatus) {
+      case "Finalizada": return "default"
+      case "En Revisión": return "secondary"
+      case "Creada": return "outline"
+      case "Anulada": return "destructive"
+      default: return "default"
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full p-6">
-      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">Panel de usuarios</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Actas elaboradas</h2>
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground text-lg">
-               Mostrando {currentUsers.length} de {filteredUsers.length} resultados (Total: {users.length}).
+               Mostrando {currentActas.length} de {filteredActas.length} resultados (Total: {actas.length}).
             </p>
           </div>
         </div>
       </div>
 
-      {/* BARRA DE HERRAMIENTAS */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 my-4">
         
         {/* BUSCADOR FUNCIONAL */}
@@ -140,43 +153,28 @@ export default function UsersPage() {
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar por nombre o email..."
+              placeholder="Buscar por número, órgano o RIF..."
               className="pl-10 py-6 text-lg"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
-                setCurrentPage(1) // Reset a pág 1 al buscar
+                setCurrentPage(1) // Regresamos a la página 1 al buscar
               }}
             />
         </div>
 
-        {/* Acciones Masivas */}
         {selectedRows.length > 0 && (
           <div className="flex items-center gap-6 animate-in fade-in slide-in-from-right-5">
             <span className="text-sm font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
-              {selectedRows.length} seleccionados
+              {selectedRows.length} seleccionadas
             </span>
             <div className="h-8 w-[1px] bg-border" />
-            
-            {/* Switch Masivo */}
-            <div className="flex items-center gap-3 bg-card border rounded-lg px-4 py-2 shadow-sm">
-              <span className="text-sm font-medium text-muted-foreground">Cambiar selección a:</span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-foreground">Express</span>
-                <Switch
-                  onCheckedChange={(checked) => handleBulkRoleChange(checked)}
-                />
-                <span className="text-sm font-bold text-blue-600">Pro</span>
-              </div>
-            </div>
-
-            {/* Eliminar Masivo */}
             <Button 
               variant="destructive" 
               size="icon"
               className="h-10 w-10 shadow-sm"
               onClick={handleBulkDelete}
-              title="Eliminar usuarios seleccionados"
+              title="Eliminar actas seleccionadas"
             >
               <FaTrashCan className="h-5 w-5" />
             </Button>
@@ -184,8 +182,7 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* TABLA */}
-      <div className="rounded-lg border shadow-sm bg-card">
+      <div className="rounded-lg border shadow-sm bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -195,44 +192,43 @@ export default function UsersPage() {
                   onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                 />
               </TableHead>
-              <TableHead className="text-lg py-4">Nombre</TableHead>
-              <TableHead className="text-lg py-4">Apellido</TableHead>
-              <TableHead className="text-lg py-4">Email</TableHead>
-              <TableHead className="text-lg py-4 text-center">Rol / Plan</TableHead>
-              <TableHead className="text-lg py-4 text-center pr-6">Opciones</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">Número de Acta</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">Nombre del Órgano</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">RIF</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">Tipo de Acta</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">Estatus</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">Lapsos</TableHead>
+              <TableHead className="text-lg py-4 whitespace-nowrap">Moratoria</TableHead>
+              <TableHead className="text-lg py-4 text-center pr-6 whitespace-nowrap">Opciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentUsers.length > 0 ? (
-              currentUsers.map((user) => {
-                const isSelected = selectedRows.includes(user.id)
+            {currentActas.length > 0 ? (
+              currentActas.map((acta) => {
+                const isSelected = selectedRows.includes(acta.id)
                 return (
                   <TableRow 
-                    key={user.id} 
+                    key={acta.id} 
                     className={`text-base transition-colors ${isSelected ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-muted/30"}`}
                   >
                     <TableCell className="pl-6 py-4">
                       <Checkbox 
                         checked={isSelected}
-                        onCheckedChange={(checked) => handleSelectRow(user.id, checked as boolean)}
+                        onCheckedChange={(checked) => handleSelectRow(acta.id, checked as boolean)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium py-4">{user.firstName}</TableCell>
-                    <TableCell className="font-medium py-4">{user.lastName}</TableCell>
-                    <TableCell className="py-4 text-muted-foreground">{user.email}</TableCell>
-                    <TableCell className="py-4">
-                      <div className="flex items-center justify-center gap-4">
-                        <span className={`text-base ${!user.isPro ? "font-bold text-foreground" : "text-muted-foreground"}`}>
-                          Express
-                        </span>
-                        <Switch
-                          checked={user.isPro}
-                          onCheckedChange={() => toggleRole(user.id)}
-                        />
-                        <span className={`text-base ${user.isPro ? "font-bold text-blue-600" : "text-muted-foreground"}`}>
-                          Pro
-                        </span>
-                      </div>
+                    <TableCell className="font-medium py-4 whitespace-nowrap">{acta.numeroActa}</TableCell>
+                    <TableCell className="py-4 text-muted-foreground whitespace-nowrap">{acta.nombreOrgano}</TableCell>
+                    <TableCell className="py-4 font-mono text-sm whitespace-nowrap">{acta.rif}</TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">{acta.tipoActa}</TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <Badge variant={getBadgeVariant(acta.estatus)} className="text-sm px-3 py-1">
+                        {acta.estatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 text-muted-foreground whitespace-nowrap">{acta.lapsos}</TableCell>
+                    <TableCell className={`py-4 font-medium whitespace-nowrap ${acta.moratoria === "Al día" ? "text-green-600" : "text-red-600"}`}>
+                      {acta.moratoria}
                     </TableCell>
                     <TableCell className="py-4 pr-6">
                       <div className="flex items-center justify-center gap-2">
@@ -243,7 +239,7 @@ export default function UsersPage() {
                           variant="ghost" 
                           size="icon" 
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(acta.id)}
                         >
                             <MdDelete className="h-5 w-5" />
                         </Button>
@@ -254,7 +250,7 @@ export default function UsersPage() {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                   No se encontraron resultados para &quot;{searchTerm}&quot;
                 </TableCell>
               </TableRow>

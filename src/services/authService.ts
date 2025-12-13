@@ -19,7 +19,7 @@ interface LoginResponse {
 
 export const authService = {
   login: async (credentials: LoginFormData): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>('/auth/login', credentials);
+    const response = await api.post<LoginResponse>('/admin/auth/login', credentials);
     return response.data;
   },
 

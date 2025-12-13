@@ -130,13 +130,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       {/* Sub-item 1: Actas Creadas */}
+                      {/* Sub-item 1: NOMBRE ACTUALIZADO */}
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild>
-                          <a href="/dashboard/actas-creadas">
-                            <span>Actas creadas</span>
+                          <a href="/dashboard/actas-elaboradas">
+                            <span>Actas elaboradas</span> {/* Cambio aquí */}
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
+                      
+                      {/* Sub-item 2: Actas Compliance */}
 
                       {/* Sub-item 2: Actas Compliance */}
                       <SidebarMenuSubItem>
