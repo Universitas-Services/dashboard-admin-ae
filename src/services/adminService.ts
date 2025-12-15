@@ -1,5 +1,6 @@
 // src/services/adminService.ts
-import apiClient from '@/src/lib/axios';
+import apiClient from '../lib/axios';
+
 
 // Usuarios
 export const getUsers = async (page = 1, filters = {}) => {

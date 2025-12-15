@@ -44,7 +44,7 @@ export default function LoginForm() {
       setAuth(response.accessToken, response.refreshToken, response.user);
 
       // Redirigir al dashboard
-      router.push('/dashboard'); 
+      router.replace('/dashboard'); 
       
     } catch (err: unknown) {
       console.error(err);
