@@ -1,93 +1,110 @@
 import axios from 'axios';
-import {
-  getAccessToken,
-  getRefreshToken,
-  setAuthTokens,
-  clearAuthStorage,
-} from './authStorage';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { authService } from '@/services/authService'; 
+import { getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/authStorage';
 
-// URL base desde variables de entorno
-const baseURL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'; // Ajusta a tu URL
 
-// Creamos la instancia principal de Axios
 const api = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 // --- INTERCEPTOR DE REQUEST ---
-// Antes de que salga cualquier petición, inyectamos el token si existe.
+// Igual que la referencia: Siempre inyecta el token más fresco del storage
 api.interceptors.request.use(
   (config) => {
-    // Leemos directamente del localStorage (rápido y síncrono)
     const token = getAccessToken();
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+// --- LÓGICA DE REFRESH (QUEUE + LOCK) ---
+// Variables para controlar la concurrencia y evitar bucles
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value: string) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    } else {
+      prom.reject(new Error('No token provided'));
+    }
+  });
+  failedQueue = [];
+};
+
 // --- INTERCEPTOR DE RESPONSE ---
-// Aquí es donde ocurre la magia: interceptamos errores 401.
 api.interceptors.response.use(
-  (response) => response, // Si todo va bien, pasamos la respuesta
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Detectamos si es un error 401 (No Autorizado)
-    // Y verificamos la bandera '_retry' para evitar bucles infinitos
+    // Si es 401 y NO es un reintento
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; // Marcamos que ya intentamos refrescar esta petición
+      
+      // Si ya se está refrescando, encolamos esta petición
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
 
-      try {
-        const refreshToken = getRefreshToken();
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-        if (!refreshToken) {
-          // Si no hay token de refresco, no hay nada que hacer -> Logout
-          throw new Error('No refresh token available');
+      const refreshTokenStr = getRefreshToken();
+
+      if (refreshTokenStr) {
+        try {
+          // 1. Llamamos al endpoint de refresh
+          const newTokens = await authService.refreshToken(refreshTokenStr);
+
+          // 2. Guardamos tokens (Storage y Store si es necesario)
+          setAuthTokens(newTokens);
+          
+          // Nota: Si quieres actualizar el store de Zustand también, podrías hacerlo aquí,
+          // pero actualizar el localStorage es lo crítico para axios.
+          
+          // 3. Actualizamos cabecera
+          originalRequest.headers['Authorization'] = `Bearer ${newTokens.access_Token}`;
+          
+          // 4. Procesamos cola
+          processQueue(null, newTokens.access_Token);
+          
+          // 5. Reintentamos
+          return api(originalRequest);
+
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+          // Si falla el refresh, logout total
+          useAuthStore.getState().logout(); 
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
-
-        // IMPORTANTE: Hacemos la llamada de refresh usando axios puro (NO la instancia 'api')
-        // Esto evita que esta petición pase por los interceptores y cree un bucle.
-        const response = await axios.post(`${baseURL}/admin/auth/refresh`, {
-          refreshToken: refreshToken,
-        });
-
-        // Asumimos que el backend devuelve la estructura AuthTokenResponse { accessToken, refreshToken }
-        const newTokens = response.data;
-
-        // 1. Guardamos los nuevos tokens en el storage
-        setAuthTokens(newTokens);
-
-        // 2. Actualizamos el header de la instancia 'api' para futuras peticiones
-        api.defaults.headers.common.Authorization = `Bearer ${newTokens.accessToken}`;
-        
-        // 3. Actualizamos el header de la petición que falló originalmente
-        originalRequest.headers.Authorization = `Bearer ${newTokens.accessToken}`;
-
-        // 4. Reintentamos la petición original con el nuevo token
-        return api(originalRequest);
-
-      } catch (refreshError) {
-        // Si el refresco falla (ej. refresh token también expiró o fue revocado)
-        console.error('La sesión ha expirado o el refresh token es inválido.', refreshError);
-        
-        // Limpiamos todo rastro de la sesión
-        clearAuthStorage();
-        
-        // Redirigimos al login forzosamente
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        return Promise.reject(refreshError);
+      } else {
+        // No hay refresh token
+        useAuthStore.getState().logout();
+        return Promise.reject(error);
       }
     }
 
-    // Si es otro tipo de error, lo dejamos pasar
     return Promise.reject(error);
   }
 );

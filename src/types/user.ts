@@ -18,6 +18,11 @@ export interface User {
   updatedAt: string;
 }
 
+export interface AdminUser {
+  nombreCompleto: string;
+  email: string;
+}
+
 // Estructura de la metadata de paginación que devuelve el backend
 export interface PaginationMeta {
   totalItems: number;
