@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // O la fuente que estés usando
+import { Inter } from "next/font/google";
 import "./globals.css";
+// 1. Importamos el inicializador
+import { AuthInitializer } from "@/components/AuthInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,10 +19,8 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        {/* Aquí ya NO va el AuthInitializer.
-            El store (useAuthStore) recuperará la sesión automáticamente 
-            cuando cualquier componente intente usarla.
-        */}
+        {/* 2. Lo colocamos aquí para que arranque la lógica de Auth */}
+        <AuthInitializer />
         {children}
       </body>
     </html>

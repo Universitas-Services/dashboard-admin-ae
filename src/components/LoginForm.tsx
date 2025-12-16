@@ -8,18 +8,19 @@ import Link from 'next/link';
 import { Loader2, Eye, EyeOff } from 'lucide-react'; 
 
 import { useAuthStore } from '../stores/useAuthStore';
-import { authService, loginSchema, LoginFormData } from '../services/authService';
+import { loginSchema, LoginFormData } from '../services/authService';
 
-// Componentes UI (Asegúrate de tenerlos o usa shadcn para instalarlos)
+// Componentes UI
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-// Si no tienes el componente Alert, puedes borrar estas importaciones y el bloque <Alert> abajo
 import { Alert, AlertDescription } from '../components/ui/alert'; 
 
 export default function LoginForm() {
   const router = useRouter();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  
+  // CORRECCIÓN: Ahora extraemos 'login' en lugar de 'setAuth'
+  const login = useAuthStore((state) => state.login);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,22 +34,19 @@ export default function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await authService.login(data);
-      
-      // Guardamos sesión en el store
-      setAuth(response.accessToken, response.refreshToken, response.user);
+      await login(data);
 
-      // Redirigir al dashboard
+      // Si no lanza error, el login fue exitoso. Redirigimos.
       router.replace('/dashboard'); 
       
-    } catch (err: unknown) {
+    } catch (err) { // <--- AQUÍ: Simplemente quita ': any'
       console.error(err);
-      // Mensaje de error genérico o específico según el backend
+      // Intentamos mostrar un mensaje útil si el backend lo envía, sino uno genérico
       setError('Credenciales incorrectas o error en el servidor.');
     } finally {
       setLoading(false);
