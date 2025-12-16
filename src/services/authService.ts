@@ -1,4 +1,4 @@
-import api from '@/lib/axios';
+import api, { plainApi } from '@/lib/axios';
 import { z } from 'zod';
 import { AdminUser } from '@/types/user';
 
@@ -20,28 +20,31 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 
 // Respuesta del Login: Asumimos que tu backend devuelve tokens + usuario al loguear.
 // Si solo devuelve tokens, quitamos "user: User" de aquí.
-export interface LoginResponse extends AuthTokenResponse {
-  user: AdminUser;
-}
+// Nota: el endpoint de login solo devuelve tokens según especificación del backend
 
 // --- SERVICIO ---
 
 export const authService = {
   // 1. INICIAR SESIÓN
   // Endpoint: POST /admin/auth/login
-  login: async (credentials: LoginFormData): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>('/admin/auth/login', credentials);
-    return response.data;
+  login: async (credentials: LoginFormData): Promise<AuthTokenResponse> => {
+    const response = await api.post('/admin/auth/login', credentials);
+    // Backend devuelve snake_case: access_token, refresh_token
+    return {
+      access_Token: response.data.access_token || response.data.accessToken,
+      refresh_Token: response.data.refresh_token || response.data.refreshToken,
+    };
   },
 
   // 2. REFRESCAR TOKEN
   // Endpoint: POST /admin/auth/refresh
   // Envía el refreshToken actual y recibe un par nuevo de tokens
   refreshToken: async (token: string): Promise<AuthTokenResponse> => {
-    const response = await api.post<AuthTokenResponse>('/admin/auth/refresh', {
-      refreshToken: token,
-    });
-    return response.data;
+    const response = await plainApi.post('/admin/auth/refresh', { refresh_token: token });
+    return {
+      access_Token: response.data.access_token || response.data.accessToken,
+      refresh_Token: response.data.refresh_token || response.data.refreshToken,
+    };
   },
 
   // 3. OBTENER PERFIL ACTUAL (ME)
@@ -66,6 +69,6 @@ export const authService = {
   // Endpoint: POST /admin/auth/logout
   // Notifica al servidor para invalidar el refresh token
   logout: async () => {
-    return api.post('/admin/auth/logout');
+    return plainApi.post('/admin/auth/logout');
   }
 };

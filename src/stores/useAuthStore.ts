@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 import { authService, LoginFormData } from '@/services/authService';
 import { AdminUser } from '@/types/user';
 import {
@@ -41,23 +41,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       // 1. Login API
       const response = await authService.login(credentials);
-      
+
       // 2. Guardar Tokens
       setAuthTokens({
         access_Token: response.access_Token,
         refresh_Token: response.refresh_Token,
       });
 
-      // 3. Obtener Usuario (/me)
-      const user = await authService.getMe();
-      
-      // 4. Guardar Usuario
-      setUserData(user);
-
-      // 5. Actualizar Store
+      // NOTA: No llamar a /me automáticamente. El componente UI solicitará el perfil cuando lo necesite.
       set({
         isAuthenticated: true,
-        user: user,
+        user: null,
         status: 'idle',
       });
       
@@ -119,21 +113,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
 
         if (isExpired) {
-            console.log('Token expirado en carga, refrescando...');
-            // Axios interceptor NO se usa aquí directamente porque estamos llamando al servicio manualmente
-            // Llamamos directo a refreshToken
-            const newTokens = await authService.refreshToken(currentRefresh);
-            setAuthTokens(newTokens);
+            // Token expirado en carga: intentamos refrescar usando el servicio
+            try {
+              const newTokens = await authService.refreshToken(currentRefresh!);
+              setAuthTokens(newTokens);
+              set({ isAuthenticated: true });
+            } catch (e) {
+              // Si no podemos refrescar, hacer logout
+              console.error('Refresh falló en carga:', e);
+              get().logout();
+              return;
+            }
         } else {
             // Si el token es válido, confirmamos estado
             set({ isAuthenticated: true });
         }
 
-        // Cargar datos frescos del usuario
-        // Igual que en la referencia: getAuthenticatedUser() -> aquí getMe()
-        const user = await authService.getMe();
-        setUserData(user);
-        set({ user, status: 'idle' });
+        // NO llamar a /me aquí; el UI solicitará perfil cuando sea necesario.
+        set({ status: 'idle' });
 
     } catch (error) {
         console.error('Error en checkAuthOnLoad:', error);

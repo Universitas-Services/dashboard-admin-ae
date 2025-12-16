@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 // Ajustamos la ruta para salir de __tests__/components/ e ir a components/
 import LoginForm from '../components/LoginForm';
 
