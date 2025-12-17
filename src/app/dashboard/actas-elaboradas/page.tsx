@@ -45,7 +45,9 @@ const initialActas: Acta[] = Array.from({ length: 30 }, (_, i) => {
   const tiposOptions = ["Entrega", "Recepción", "Auditoría", "Supervisión"]
   const organosOptions = ["Dirección de Finanzas", "Recursos Humanos", "Consultoría Jurídica", "Despacho del Alcalde", "Ingeniería Municipal"]
   
-  const diasMora = i % 5 === 0 ? Math.floor(Math.random() * 20) + 1 : 0
+  // CORRECCIÓN: Eliminamos Math.random() y usamos una fórmula basada en el índice 'i'
+  // Esto asegura que el valor sea IDÉNTICO en el servidor y en el cliente.
+  const diasMora = i % 5 === 0 ? (i % 20) + 1 : 0
   
   return {
     id: `ACT-${2025000 + i}`,
