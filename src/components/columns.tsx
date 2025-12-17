@@ -1,9 +1,11 @@
-"use client"
+'use client';
 
-import { ColumnDef } from "@tanstack/react-table"
-import { User, UserRole } from "@/types/user" // Asegúrate de tener tus tipos aquí
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { ColumnDef } from '@tanstack/react-table';
+import { MoreHorizontal, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,131 +13,155 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ShieldCheck, CreditCard, Copy } from "lucide-react"
-import { toast } from "sonner"
-import { adminService } from "@/services/adminService"
+} from '@/components/ui/dropdown-menu';
 
-// Componente auxiliar para las Acciones (para mantener limpio el código)
+import { adminService } from '@/services/adminService';
+import { User, UserRole } from '@/types/user';
+
+// Importamos el componente Sheet que creamos anteriormente
+import { UserDetailSheet } from './UserDetailSheet';
+
+// --- COMPONENTE INTERNO PARA LA CELDA DE ACCIONES ---
+// Esto nos permite usar hooks y lógica asíncrona de forma limpia
 const ActionCell = ({ user }: { user: User }) => {
   
-  const handleRoleChange = async (newRole: UserRole) => {
+  const handleUpgradeToPro = async () => {
     try {
-      await adminService.updateUserRole(user.id, newRole)
-      toast.success(`Rol actualizado a ${newRole}`)
-      window.location.reload() // Recarga simple para actualizar la vista
+      toast.info('Procesando ascenso...');
+      await adminService.upgradeUserToPro(user.id);
+      toast.success('Usuario ascendido a PRO exitosamente');
+      window.location.reload();
     } catch (error) {
-      toast.error("Error al actualizar rol")
+      console.error(error);
+      toast.error('Error al ascender usuario');
     }
-  }
+  };
 
-  const handleUpgradePro = async () => {
+  const handleDowngradeToFree = async () => {
     try {
-      await adminService.upgradeUserToPro(user.id)
-      toast.success("Usuario ascendido a PRO correctamente")
-      window.location.reload()
+      toast.info('Procesando cambio de rol...');
+      // Usamos updateUserRole para volverlo USER (Gratis)
+      await adminService.updateUserRole(user.id, 'USER');
+      toast.success('Usuario descendido a plan GRATIS');
+      window.location.reload();
     } catch (error) {
-      toast.error("Error al actualizar usuario")
+      console.error(error);
+      toast.error('Error al cambiar rol de usuario');
     }
-  }
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Abrir menú</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => {
-            navigator.clipboard.writeText(user.email)
-            toast.success("Email copiado")
-        }}>
-          <Copy className="mr-2 h-4 w-4" />
-          Copiar Email
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        
-        {user.role === 'USER' && (
-          <DropdownMenuItem onClick={handleUpgradePro}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            Ascender a PRO
+    <div className="flex items-center gap-1">
+      {/* 1. Botón de Ver Detalles (Sheet) */}
+      <UserDetailSheet userId={user.id} />
+
+      {/* 2. Dropdown Menu con Funcionalidades Restauradas */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+            <span className="sr-only">Abrir menú</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+          
+          <DropdownMenuItem
+            onClick={() => {
+              navigator.clipboard.writeText(user.id);
+              toast.success('ID copiado al portapapeles');
+            }}
+          >
+            Copiar ID de usuario
           </DropdownMenuItem>
-        )}
+          
+          <DropdownMenuSeparator />
 
-        <DropdownMenuLabel>Cambiar Rol</DropdownMenuLabel>
-        <DropdownMenuItem 
-          disabled={user.role === 'ADMIN'}
-          onClick={() => handleRoleChange('ADMIN')}
-        >
-          <ShieldCheck className="mr-2 h-4 w-4" />
-          Hacer Admin
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-           disabled={user.role === 'USER'}
-           onClick={() => handleRoleChange('USER')}
-        >
-           Degradar a Usuario
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
+          {/* Lógica condicional para Ascender/Descender */}
+          {user.role === 'USER' && (
+            <DropdownMenuItem onClick={handleUpgradeToPro}>
+              <ShieldCheck className="mr-2 h-4 w-4 text-green-600" />
+              Ascender a PRO
+            </DropdownMenuItem>
+          )}
 
-// Definición de las columnas
+          {user.role === 'PAID_USER' && (
+            <DropdownMenuItem onClick={handleDowngradeToFree}>
+              <ShieldAlert className="mr-2 h-4 w-4 text-orange-600" />
+              Descender a Gratis
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem disabled>Ver actividad (Próximamente)</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};
+
+// --- DEFINICIÓN DE COLUMNAS ---
 export const columns: ColumnDef<User>[] = [
+  // Columna de Selección (Opcional, si la usas)
+  // {
+  //   id: "select",
+  //   header: ({ table }) => (
+  //     <Checkbox ... />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <Checkbox ... />
+  //   ),
+  // },
   {
-    accessorKey: "email",
-    header: "Usuario",
-    cell: ({ row }) => {
-      const user = row.original
-      return (
-        <div className="flex flex-col">
-          <span className="font-medium">{user.nombre} {user.apellido}</span>
-          <span className="text-xs text-muted-foreground">{user.email}</span>
+    accessorKey: 'email',
+    header: 'Usuario',
+    cell: ({ row }) => (
+      <div>
+        <div className="font-medium text-gray-900">
+            {row.original.nombre} {row.original.apellido || ''}
         </div>
-      )
-    },
+        <div className="text-sm text-gray-500">{row.getValue('email')}</div>
+      </div>
+    ),
   },
   {
-    accessorKey: "role",
-    header: "Rol",
+    accessorKey: 'role',
+    header: 'Rol',
     cell: ({ row }) => {
-      const role = row.getValue("role") as UserRole
-      switch (role) {
-        case 'ADMIN':
-          return <Badge variant="destructive">Admin</Badge>
-        case 'PAID_USER':
-          return <Badge className="bg-blue-600 hover:bg-blue-700">Pro</Badge>
-        default:
-          return <Badge variant="secondary">Gratis</Badge>
-      }
+      const role = row.getValue('role') as string;
+      
+      // Mapeo de colores según el rol
+      const variant = 
+        role === 'ADMIN' ? 'destructive' : 
+        role === 'PAID_USER' ? 'default' : 
+        'secondary'; // USER
+      
+      return <Badge variant={variant}>{role}</Badge>;
     },
   },
   {
-    accessorKey: "isActive",
-    header: "Estado",
+    accessorKey: 'isActive',
+    header: 'Estado',
     cell: ({ row }) => {
-      const isActive = row.getValue("isActive")
-      return isActive ? (
-        <span className="text-green-600 text-sm font-medium">Activo</span>
-      ) : (
-        <span className="text-red-500 text-sm font-medium">Inactivo</span>
-      )
+      const isActive = row.getValue('isActive') as boolean;
+      return (
+        <Badge variant={isActive ? 'outline' : 'destructive'} className={isActive ? 'text-green-600 border-green-600' : ''}>
+          {isActive ? 'Activo' : 'Inactivo'}
+        </Badge>
+      );
     },
   },
   {
-    accessorKey: "createdAt",
-    header: "Registro",
+    accessorKey: 'createdAt',
+    header: 'Fecha Registro',
     cell: ({ row }) => {
-      const date = new Date(row.getValue("createdAt"))
-      return <div className="text-sm text-muted-foreground">{date.toLocaleDateString()}</div>
+      const date = new Date(row.getValue('createdAt'));
+      return <div className="text-sm text-gray-500">{date.toLocaleDateString()}</div>;
     },
   },
+  // --- COLUMNA DE ACCIONES ---
   {
-    id: "actions",
+    id: 'actions',
     cell: ({ row }) => <ActionCell user={row.original} />,
   },
-]
+];
