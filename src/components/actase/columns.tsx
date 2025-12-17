@@ -1,20 +1,123 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
+import { AxiosError } from 'axios';
 import { Acta, ActaStatus } from '@/types/acta';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Download, Send } from 'lucide-react'; // Eliminé el icono Copy
+import { toast } from 'sonner';
+import { actasService } from '@/services/actasService';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  // DropdownMenuSeparator, // Ya no es necesario si no separamos grupos
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Función auxiliar para colores de Badge según Status
+// --- COMPONENTE INTERNO PARA MANEJAR ACCIONES ---
+const ActaActionCell = ({ acta }: { acta: Acta }) => {
+  
+  // Bloqueamos acciones si el estado es explícitamente "GUARDADA"
+  const isGuardada = acta.status === 'GUARDADA';
+
+  const handleDownload = async () => {
+    if (isGuardada) {
+        toast.error("El acta debe estar COMPLETADA para poder descargarla.");
+        return;
+    }
+
+    const toastId = toast.loading('Generando documento...');
+    try {
+      const blob = await actasService.downloadActaDocx(acta.id);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Acta-${acta.numeroActa || 'Borrador'}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Descarga iniciada', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      let errorMessage = 'Error al descargar el acta.';
+      
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        const msg = error.response.data.message;
+        errorMessage = Array.isArray(msg) ? msg[0] : msg;
+      }
+      
+      toast.error(errorMessage, { id: toastId });
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (isGuardada) {
+        toast.error("El acta debe estar COMPLETADA para poder enviarla.");
+        return;
+    }
+
+    const toastId = toast.loading('Enviando acta por correo...');
+    try {
+      await actasService.sendActaDocx(acta.id);
+      toast.success('Documento enviado exitosamente al correo del usuario', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      let errorMessage = 'Error al enviar el correo.';
+      
+      if (error instanceof AxiosError && error.response?.data?.message) {
+         const msg = error.response.data.message;
+         errorMessage = Array.isArray(msg) ? msg[0] : msg;
+      }
+      
+      toast.error(errorMessage, { id: toastId });
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Abrir menú</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+        
+        {/* OPCIÓN 1: DESCARGAR */}
+        <DropdownMenuItem 
+            onClick={handleDownload} 
+            className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
+        >
+          <Download className="mr-2 h-4 w-4 text-blue-600" />
+          Descargar DOCX
+        </DropdownMenuItem>
+
+        {/* OPCIÓN 2: ENVIAR */}
+        <DropdownMenuItem 
+            onClick={handleSendEmail} 
+            className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
+        >
+          <Send className="mr-2 h-4 w-4 text-green-600" />
+          Enviar por Correo
+        </DropdownMenuItem>
+
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+// --- DEFINICIONES DE COLUMNAS ---
+
 const getStatusVariant = (status: ActaStatus) => {
   switch (status) {
     case 'ENTREGADA':
@@ -78,7 +181,6 @@ export const columns: ColumnDef<Acta>[] = [
     header: 'RIF',
     cell: ({ row }) => {
       const metadata = row.original.metadata;
-      // Busca rifOrgano o rif, o muestra N/A
       const rifValue = (metadata?.rifOrgano as string) || (metadata?.rif as string) || 'N/A';
       
       return <div className="font-mono text-sm">{rifValue}</div>;
@@ -102,22 +204,14 @@ export const columns: ColumnDef<Acta>[] = [
       </Badge>
     ),
   },
-  
-  // --- COLUMNA LAPSOS (TIEMPO REALIZACIÓN) SIMPLE ---
   {
     accessorKey: 'tiempoRealizacion',
     header: 'Lapsos',
     cell: ({ row }) => {
-      // 1. Buscamos el valor en la raíz
       const valRoot = row.original.tiempoRealizacion;
-      
-      // 2. Buscamos en metadata por si acaso
       const valMeta = row.original.metadata?.['tiempoRealizacion'] as number | string | undefined;
-      
-      // 3. Obtenemos el valor final (sin conversión extraña, solo mostramos lo que llegue)
       const valor = valRoot ?? valMeta ?? 0;
 
-      // 4. Renderizado directo: Muestra el número tal cual (ej: 0, 1, 3, 120...)
       return (
         <div className="text-muted-foreground font-medium">
           {valor}
@@ -125,13 +219,11 @@ export const columns: ColumnDef<Acta>[] = [
       );
     },
   },
-
   {
     accessorKey: 'diasRestantes',
     header: 'Moratoria',
     cell: ({ row }) => {
       const dias = row.original.diasRestantes ?? 0;
-      // Rojo si es negativo o menor a 5
       const isCritical = dias < 5; 
 
       return (
@@ -144,25 +236,6 @@ export const columns: ColumnDef<Acta>[] = [
   {
     id: 'actions',
     header: 'Opciones',
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menú</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(row.original.id)}
-            >
-              Copiar ID
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <ActaActionCell acta={row.original} />,
   },
 ];

@@ -3,10 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Trash2, ArrowLeft, Lock } from 'lucide-react'; // Agregué el icono Lock para reforzar visualmente
+import { Loader2, Trash2, ArrowLeft, Lock } from 'lucide-react';
 
 import { adminService } from '@/services/adminService';
 import { User } from '@/types/user';
+// Importamos tipos y componentes reutilizables de Actas
+import { Acta } from '@/types/acta';
+import { columns } from '@/components/actase/columns'; // Reutilizamos columnas
+import { DataTable } from '@/components/actase/data-table'; // Reutilizamos tabla
 
 // Componentes UI
 import { Button } from '@/components/ui/button';
@@ -33,7 +37,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-// Tipado local para el perfil
 interface UserProfile {
   institucion?: string;
   cargo?: string;
@@ -44,17 +47,24 @@ export default function UserDetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Validación segura del ID
   const userId = typeof params?.id === 'string' ? params.id : '';
   const currentTab = searchParams.get('tab') || 'perfil';
 
+  // Estado del Usuario
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Estado de las Actas del Usuario
+  const [actas, setActas] = useState<Acta[]>([]);
+  const [loadingActas, setLoadingActas] = useState(false);
+  const [actasPage, setActasPage] = useState(1);
+  const [actasTotalPages, setActasTotalPages] = useState(0);
+
+  // 1. Fetch de datos del Usuario (Solo carga inicial)
   useEffect(() => {
     if (userId) {
-      setLoading(true);
+      setLoadingUser(true);
       adminService.getUserById(userId)
         .then((data) => setUser(data))
         .catch((err) => {
@@ -62,11 +72,29 @@ export default function UserDetailsPage() {
           toast.error("Error al cargar usuario");
           router.push('/dashboard/usuarios');
         })
-        .finally(() => setLoading(false));
+        .finally(() => setLoadingUser(false));
     }
   }, [userId, router]);
 
+  // 2. Fetch de Actas (Solo si estamos en la pestaña 'actas' o cambia la página)
+  useEffect(() => {
+    if (userId && currentTab === 'actas') {
+      setLoadingActas(true);
+      adminService.getUserActas(userId, { page: actasPage, limit: 10 })
+        .then((response) => {
+          setActas(response.data);
+          setActasTotalPages(response.meta.totalPages);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Error al cargar el historial de actas");
+        })
+        .finally(() => setLoadingActas(false));
+    }
+  }, [userId, currentTab, actasPage]);
+
   const handleTabChange = (value: string) => {
+    // Al cambiar de tab, actualizamos la URL pero mantenemos el historial limpio
     router.replace(`/dashboard/usuarios/${userId}?tab=${value}`);
   };
 
@@ -84,7 +112,7 @@ export default function UserDetailsPage() {
     }
   };
 
-  if (loading) {
+  if (loadingUser) {
     return (
       <div className="flex h-[50vh] w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -129,7 +157,7 @@ export default function UserDetailsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* --- PESTAÑA PERFIL CON INPUTS DESHABILITADOS --- */}
+        {/* --- PESTAÑA PERFIL --- */}
         <TabsContent value="perfil" className="mt-6">
           <Card>
             <CardHeader>
@@ -139,12 +167,9 @@ export default function UserDetailsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              
-              {/* Información Personal */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Nombre Completo</Label>
-                  {/* El atributo 'disabled' bloquea el input y aplica estilos de opacidad */}
                   <Input 
                     value={`${user.nombre} ${user.apellido || ''}`.trim()} 
                     disabled 
@@ -176,10 +201,7 @@ export default function UserDetailsPage() {
                   />
                 </div>
               </div>
-
               <Separator />
-
-              {/* Información Institucional */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Institución</Label>
@@ -202,13 +224,29 @@ export default function UserDetailsPage() {
           </Card>
         </TabsContent>
 
+        {/* --- PESTAÑA ACTAS (IMPLEMENTADA) --- */}
         <TabsContent value="actas" className="mt-6">
           <Card>
-            <CardHeader><CardTitle>Historial de Actas</CardTitle></CardHeader>
-            <CardContent className="text-muted-foreground py-8 text-center">En construcción</CardContent>
+            <CardHeader>
+              <CardTitle>Historial de Actas</CardTitle>
+              <CardDescription>
+                Actas asociadas a {user.nombre} {user.apellido}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+               <DataTable 
+                  columns={columns} // Usamos las mismas columnas que Actas Elaboradas
+                  data={actas}
+                  pageCount={actasTotalPages}
+                  currentPage={actasPage}
+                  onPageChange={setActasPage}
+                  isLoading={loadingActas}
+               />
+            </CardContent>
           </Card>
         </TabsContent>
 
+        {/* --- PESTAÑA COMPLIANCE --- */}
         <TabsContent value="compliance" className="mt-6">
            <Card>
             <CardHeader><CardTitle>Compliance</CardTitle></CardHeader>
@@ -216,6 +254,7 @@ export default function UserDetailsPage() {
           </Card>
         </TabsContent>
 
+        {/* --- PESTAÑA ELIMINAR --- */}
         <TabsContent value="eliminar" className="mt-6">
           <Card className="border-red-200">
             <CardHeader className="bg-red-50/50">
