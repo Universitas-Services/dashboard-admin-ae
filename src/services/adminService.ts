@@ -1,40 +1,71 @@
 import api from '@/lib/axios';
-import { GetUsersParams, User, UsersResponse, UserRole } from '@/types/user';
+import { User } from '@/types/user';
+import { ActasResponse, GetActasParams } from '@/types/acta';
+
+// 1. Definimos los tipos para los parámetros y la respuesta paginada de Usuarios
+export interface GetUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+// Estructura de respuesta paginada (asumimos que es similar a la de Actas)
+export interface UsersResponse {
+  data: User[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}
 
 export const adminService = {
-  // ... (métodos existentes: getAllUsers, getUserById, updateUserRole, upgradeUserToPro) ...
-
-  // 1. Obtener lista de usuarios (MANTENER CÓDIGO EXISTENTE)
-  getAllUsers: async (params: GetUsersParams): Promise<UsersResponse> => {
+  // 2. CORRECCIÓN: Ahora acepta 'params' opcionales
+  getAllUsers: async (params?: GetUsersParams): Promise<UsersResponse> => {
+    // Pasamos los params a la petición axios
     const response = await api.get<UsersResponse>('/admin/users', { params });
     return response.data;
   },
 
-  getUserById: async (id: string): Promise<User> => {
+  getUserById: async (id: string) => {
     const response = await api.get<User>(`/admin/users/${id}`);
     return response.data;
   },
 
-  updateUserRole: async (userId: string, newRole: UserRole): Promise<User> => {
-    const response = await api.patch<User>('/admin/users/role', {
-      userId,
-      newRole,
+  updateUser: async (id: string, data: Partial<User>) => {
+    const response = await api.put<User>(`/admin/users/${id}`, data);
+    return response.data;
+  },
+
+  deleteUser: async (id: string) => {
+    const response = await api.delete(`/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Helpers de Roles
+  upgradeUserToPro: async (id: string) => {
+    const response = await api.put<User>(`/admin/users/${id}`, {
+      role: 'PAID_USER',
     });
     return response.data;
   },
 
-  upgradeUserToPro: async (id: string): Promise<User> => {
-    const response = await api.patch<User>(`/admin/users/${id}/upgrade-to-pro`);
+  updateUserRole: async (id: string, role: string) => {
+    const response = await api.put<User>(`/admin/users/${id}`, { role });
     return response.data;
   },
 
-  // --- NUEVO MÉTODO AGREGADO ---
-  // 5. Eliminar usuario (Simulación hasta que exista endpoint)
-  deleteUser: async (id: string): Promise<boolean> => {
-    // Simulamos un delay de red pequeño para realismo
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    // Retornamos true simulando éxito (Promise.resolve(true))
-    return Promise.resolve(true);
+  // Actas del usuario
+  getUserActas: async (
+    userId: string,
+    params: GetActasParams
+  ): Promise<ActasResponse> => {
+    const response = await api.get<ActasResponse>(
+      `/admin/users/${userId}/actas`,
+      { params }
+    );
+    return response.data;
   },
 };

@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link'; // <--- IMPORTANTE
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { FaEye } from 'react-icons/fa'; // Icono del ojo
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,15 +18,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { adminService } from '@/services/adminService';
-import { User, UserRole } from '@/types/user';
+import { User } from '@/types/user';
 
-// Importamos el componente Sheet que creamos anteriormente
-import { UserDetailSheet } from './UserDetailSheet';
+// NOTA: Ya no importamos UserDetailSheet porque no lo usaremos aquí.
 
 // --- COMPONENTE INTERNO PARA LA CELDA DE ACCIONES ---
-// Esto nos permite usar hooks y lógica asíncrona de forma limpia
 const ActionCell = ({ user }: { user: User }) => {
-  
   const handleUpgradeToPro = async () => {
     try {
       toast.info('Procesando ascenso...');
@@ -40,7 +39,6 @@ const ActionCell = ({ user }: { user: User }) => {
   const handleDowngradeToFree = async () => {
     try {
       toast.info('Procesando cambio de rol...');
-      // Usamos updateUserRole para volverlo USER (Gratis)
       await adminService.updateUserRole(user.id, 'USER');
       toast.success('Usuario descendido a plan GRATIS');
       window.location.reload();
@@ -52,10 +50,20 @@ const ActionCell = ({ user }: { user: User }) => {
 
   return (
     <div className="flex items-center gap-1">
-      {/* 1. Botón de Ver Detalles (Sheet) */}
-      <UserDetailSheet userId={user.id} />
+      {/* 1. Botón de Ver Detalles (Redirección a Nueva Página) */}
+      <Link href={`/dashboard/usuarios/${user.id}`} passHref>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0 text-foreground hover:bg-muted"
+          title="Ver detalles del usuario"
+        >
+          <FaEye className="h-4 w-4" />
+          <span className="sr-only">Ver detalles</span>
+        </Button>
+      </Link>
 
-      {/* 2. Dropdown Menu con Funcionalidades Restauradas */}
+      {/* 2. Dropdown Menu (Se mantiene igual) */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
@@ -65,7 +73,7 @@ const ActionCell = ({ user }: { user: User }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-          
+
           <DropdownMenuItem
             onClick={() => {
               navigator.clipboard.writeText(user.id);
@@ -74,10 +82,9 @@ const ActionCell = ({ user }: { user: User }) => {
           >
             Copiar ID de usuario
           </DropdownMenuItem>
-          
+
           <DropdownMenuSeparator />
 
-          {/* Lógica condicional para Ascender/Descender */}
           {user.role === 'USER' && (
             <DropdownMenuItem onClick={handleUpgradeToPro}>
               <ShieldCheck className="mr-2 h-4 w-4 text-green-600" />
@@ -93,32 +100,25 @@ const ActionCell = ({ user }: { user: User }) => {
           )}
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>Ver actividad (Próximamente)</DropdownMenuItem>
+          <DropdownMenuItem disabled>
+            Ver actividad (Próximamente)
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
 };
 
-// --- DEFINICIÓN DE COLUMNAS ---
+// --- DEFINICIÓN DE COLUMNAS (Se mantiene igual, solo exportamos la corrección de ActionCell) ---
 export const columns: ColumnDef<User>[] = [
-  // Columna de Selección (Opcional, si la usas)
-  // {
-  //   id: "select",
-  //   header: ({ table }) => (
-  //     <Checkbox ... />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <Checkbox ... />
-  //   ),
-  // },
+  // ... (Tus columnas anteriores: email, role, etc. se quedan IGUAL) ...
   {
     accessorKey: 'email',
     header: 'Usuario',
     cell: ({ row }) => (
       <div>
         <div className="font-medium text-gray-900">
-            {row.original.nombre} {row.original.apellido || ''}
+          {row.original.nombre} {row.original.apellido || ''}
         </div>
         <div className="text-sm text-gray-500">{row.getValue('email')}</div>
       </div>
@@ -129,13 +129,12 @@ export const columns: ColumnDef<User>[] = [
     header: 'Rol',
     cell: ({ row }) => {
       const role = row.getValue('role') as string;
-      
-      // Mapeo de colores según el rol
-      const variant = 
-        role === 'ADMIN' ? 'destructive' : 
-        role === 'PAID_USER' ? 'default' : 
-        'secondary'; // USER
-      
+      const variant =
+        role === 'ADMIN'
+          ? 'destructive'
+          : role === 'PAID_USER'
+            ? 'default'
+            : 'secondary';
       return <Badge variant={variant}>{role}</Badge>;
     },
   },
@@ -145,7 +144,10 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const isActive = row.getValue('isActive') as boolean;
       return (
-        <Badge variant={isActive ? 'outline' : 'destructive'} className={isActive ? 'text-green-600 border-green-600' : ''}>
+        <Badge
+          variant={isActive ? 'outline' : 'destructive'}
+          className={isActive ? 'text-green-600 border-green-600' : ''}
+        >
           {isActive ? 'Activo' : 'Inactivo'}
         </Badge>
       );
@@ -156,10 +158,11 @@ export const columns: ColumnDef<User>[] = [
     header: 'Fecha Registro',
     cell: ({ row }) => {
       const date = new Date(row.getValue('createdAt'));
-      return <div className="text-sm text-gray-500">{date.toLocaleDateString()}</div>;
+      return (
+        <div className="text-sm text-gray-500">{date.toLocaleDateString()}</div>
+      );
     },
   },
-  // --- COLUMNA DE ACCIONES ---
   {
     id: 'actions',
     cell: ({ row }) => <ActionCell user={row.original} />,
