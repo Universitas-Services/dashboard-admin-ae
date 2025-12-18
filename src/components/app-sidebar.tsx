@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import {
   Command,
@@ -110,10 +111,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {/* Opción Panel de Usuarios */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Panel de usuarios">
-                  <a href="/dashboard/usuarios">
+                  <Link href="/dashboard/usuarios">
                     <Users />
                     <span>Panel de usuarios</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

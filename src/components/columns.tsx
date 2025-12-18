@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link'; // <--- IMPORTANTE
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { FaEye } from 'react-icons/fa'; // Icono del ojo
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +18,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { adminService } from '@/services/adminService';
-import { User, UserRole } from '@/types/user';
+import { User } from '@/types/user';
 
-// Importamos el componente Sheet que creamos anteriormente
-import { UserDetailSheet } from './UserDetailSheet';
+// NOTA: Ya no importamos UserDetailSheet porque no lo usaremos aquí.
 
 // --- COMPONENTE INTERNO PARA LA CELDA DE ACCIONES ---
-// Esto nos permite usar hooks y lógica asíncrona de forma limpia
 const ActionCell = ({ user }: { user: User }) => {
   
   const handleUpgradeToPro = async () => {
@@ -40,7 +40,6 @@ const ActionCell = ({ user }: { user: User }) => {
   const handleDowngradeToFree = async () => {
     try {
       toast.info('Procesando cambio de rol...');
-      // Usamos updateUserRole para volverlo USER (Gratis)
       await adminService.updateUserRole(user.id, 'USER');
       toast.success('Usuario descendido a plan GRATIS');
       window.location.reload();
@@ -52,10 +51,20 @@ const ActionCell = ({ user }: { user: User }) => {
 
   return (
     <div className="flex items-center gap-1">
-      {/* 1. Botón de Ver Detalles (Sheet) */}
-      <UserDetailSheet userId={user.id} />
+      {/* 1. Botón de Ver Detalles (Redirección a Nueva Página) */}
+      <Link href={`/dashboard/usuarios/${user.id}`} passHref>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 p-0 text-foreground hover:bg-muted"
+          title="Ver detalles del usuario"
+        >
+          <FaEye className="h-4 w-4" /> 
+          <span className="sr-only">Ver detalles</span>
+        </Button>
+      </Link>
 
-      {/* 2. Dropdown Menu con Funcionalidades Restauradas */}
+      {/* 2. Dropdown Menu (Se mantiene igual) */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
@@ -77,7 +86,6 @@ const ActionCell = ({ user }: { user: User }) => {
           
           <DropdownMenuSeparator />
 
-          {/* Lógica condicional para Ascender/Descender */}
           {user.role === 'USER' && (
             <DropdownMenuItem onClick={handleUpgradeToPro}>
               <ShieldCheck className="mr-2 h-4 w-4 text-green-600" />
@@ -100,18 +108,9 @@ const ActionCell = ({ user }: { user: User }) => {
   );
 };
 
-// --- DEFINICIÓN DE COLUMNAS ---
+// --- DEFINICIÓN DE COLUMNAS (Se mantiene igual, solo exportamos la corrección de ActionCell) ---
 export const columns: ColumnDef<User>[] = [
-  // Columna de Selección (Opcional, si la usas)
-  // {
-  //   id: "select",
-  //   header: ({ table }) => (
-  //     <Checkbox ... />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <Checkbox ... />
-  //   ),
-  // },
+  // ... (Tus columnas anteriores: email, role, etc. se quedan IGUAL) ...
   {
     accessorKey: 'email',
     header: 'Usuario',
@@ -129,13 +128,10 @@ export const columns: ColumnDef<User>[] = [
     header: 'Rol',
     cell: ({ row }) => {
       const role = row.getValue('role') as string;
-      
-      // Mapeo de colores según el rol
       const variant = 
         role === 'ADMIN' ? 'destructive' : 
         role === 'PAID_USER' ? 'default' : 
-        'secondary'; // USER
-      
+        'secondary';
       return <Badge variant={variant}>{role}</Badge>;
     },
   },
@@ -159,7 +155,6 @@ export const columns: ColumnDef<User>[] = [
       return <div className="text-sm text-gray-500">{date.toLocaleDateString()}</div>;
     },
   },
-  // --- COLUMNA DE ACCIONES ---
   {
     id: 'actions',
     cell: ({ row }) => <ActionCell user={row.original} />,
