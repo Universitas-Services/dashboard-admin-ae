@@ -1,12 +1,14 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
+import axios from 'axios';
 import { ActaCompliance } from '@/types/compliance';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MoreHorizontal, Download, Send, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { complianceService } from '@/services/complianceService';
 
 import {
   DropdownMenu,
@@ -17,28 +19,98 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Mapeo de colores según los estados confirmados
 const getStatusVariant = (status: string) => {
   switch (status) {
     case 'Enviada':
-      return 'default'; // Generalmente negro o color primario
+      return 'default';
     case 'Descargada':
-      return 'secondary'; // Gris o color secundario
+      return 'secondary';
     case 'Guardada':
-      return 'outline'; // Bordeado, indica borrador/inicial
+      return 'outline';
     default:
       return 'secondary';
   }
 };
 
-// Componente de Acciones (Solo visual por ahora)
 const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
-  const handleDownload = () => {
-    toast.info(`Próximamente: Descargar acta ${acta.numeroCompliance}`);
+  
+  const isGuardada = acta.status === 'Guardada';
+
+  const handleDownload = async () => {
+    if (isGuardada) {
+      toast.error("El acta debe estar COMPLETADA para poder descargarla.");
+      return;
+    }
+
+    const toastId = toast.loading('Descargando PDF...');
+    
+    try {
+      // 1. Definimos el nombre del archivo aquí
+      const fileName = `Compliance-${acta.numeroCompliance || 'Borrador'}.pdf`;
+
+      // 2. Llamamos al servicio refactorizado
+      // La lógica del Blob y el link <a> ahora ocurre dentro de esta función
+      await complianceService.downloadCompliancePdf(acta.id, fileName);
+      
+      toast.dismiss(toastId);
+      toast.success('Descarga iniciada');
+      
+    } catch (error: unknown) {
+      console.error("Error en descarga:", error);
+      let errorMessage = 'Error al descargar el documento.';
+      
+      // Mantenemos la lógica de lectura de errores en Blobs 
+      // (necesario porque si falla, axios devuelve un Blob con el JSON de error dentro)
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data;
+        
+        if (data instanceof Blob) {
+            try {
+                const text = await data.text();
+                const errorObj = JSON.parse(text);
+                errorMessage = errorObj.message || errorObj.error || errorMessage;
+            } catch (e) {
+                console.warn("No se pudo parsear el error del Blob", e);
+            }
+        } 
+        else if (data?.message) {
+            errorMessage = data.message;
+        }
+
+        if (Array.isArray(errorMessage)) {
+            errorMessage = errorMessage[0];
+        }
+      }
+      
+      toast.dismiss(toastId);
+      toast.error(errorMessage);
+    }
   };
 
-  const handleSend = () => {
-    toast.info(`Próximamente: Enviar acta ${acta.numeroCompliance}`);
+  const handleSend = async () => {
+    if (isGuardada) {
+      toast.error("El acta debe estar COMPLETADA para poder enviarla.");
+      return;
+    }
+
+    const toastId = toast.loading('Enviando compliance por correo...');
+    try {
+      await complianceService.sendComplianceEmail(acta.id);
+      toast.dismiss(toastId);
+      toast.success('Documento enviado exitosamente al correo del usuario');
+      
+    } catch (error: unknown) {
+      console.error(error);
+      let errorMessage = 'Error al enviar el correo.';
+      
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+         const msg = error.response.data.message;
+         errorMessage = Array.isArray(msg) ? msg[0] : msg;
+      }
+      
+      toast.dismiss(toastId);
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -62,12 +134,19 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleDownload}>
-          <Download className="mr-2 h-4 w-4 text-blue-600" />
-          Descargar DOCX
+        <DropdownMenuItem 
+            onClick={handleDownload}
+            className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
+        >
+          {/* Cambiado a rojo para indicar PDF */}
+          <Download className="mr-2 h-4 w-4 text-red-600" />
+          Descargar PDF
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={handleSend}>
+        <DropdownMenuItem 
+            onClick={handleSend}
+            className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
+        >
           <Send className="mr-2 h-4 w-4 text-green-600" />
           Enviar por Correo
         </DropdownMenuItem>
@@ -126,16 +205,17 @@ export const columns: ColumnDef<ActaCompliance>[] = [
       </div>
     ),
   },
-  {
+{
     accessorKey: 'puntajeCalculado',
     header: 'Puntuación',
     cell: ({ row }) => {
         const score = row.getValue('puntajeCalculado') as number;
-        // Lógica visual: Verde si es alto, Rojo si es bajo
         const colorClass = score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
+        
+        // Lógica aplicada: (score ?? 0) asegura que no sea nulo, y .toFixed(2) fuerza los decimales
         return (
             <div className={`font-bold ${colorClass}`}>
-                {score !== undefined ? `${score.toFixed(2)}%` : '-'}
+                {(score ?? 0).toFixed(2)} pts
             </div>
         );
     }

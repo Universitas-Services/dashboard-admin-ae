@@ -7,10 +7,17 @@ import { Loader2, Trash2, ArrowLeft, Lock } from 'lucide-react';
 
 import { adminService } from '@/services/adminService';
 import { User } from '@/types/user';
-// Importamos tipos y componentes reutilizables de Actas
+
+// --- 1. IMPORTACIONES: ACTAS ELABORADAS ---
 import { Acta } from '@/types/acta';
-import { columns } from '@/components/actase/columns'; // Reutilizamos columnas
-import { DataTable } from '@/components/actase/data-table'; // Reutilizamos tabla
+import { columns as actasColumns } from '@/components/actase/columns'; 
+import { DataTable as ActasDataTable } from '@/components/actase/data-table';
+
+// --- 2. IMPORTACIONES: ACTAS COMPLIANCE (NUEVO) ---
+// Usamos "as" para renombrar los componentes y evitar conflictos de nombres
+import { ActaCompliance } from '@/types/compliance';
+import { columns as complianceColumns } from '@/components/actasc/columns'; 
+import { DataTable as ComplianceDataTable } from '@/components/actasc/data-table';
 
 // Componentes UI
 import { Button } from '@/components/ui/button';
@@ -50,18 +57,24 @@ export default function UserDetailsPage() {
   const userId = typeof params?.id === 'string' ? params.id : '';
   const currentTab = searchParams.get('tab') || 'perfil';
 
-  // Estado del Usuario
+  // --- ESTADOS: USUARIO ---
   const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Estado de las Actas del Usuario
+  // --- ESTADOS: ACTAS ELABORADAS ---
   const [actas, setActas] = useState<Acta[]>([]);
   const [loadingActas, setLoadingActas] = useState(false);
   const [actasPage, setActasPage] = useState(1);
   const [actasTotalPages, setActasTotalPages] = useState(0);
 
-  // 1. Fetch de datos del Usuario (Solo carga inicial)
+  // --- ESTADOS: COMPLIANCE (NUEVO) ---
+  const [complianceData, setComplianceData] = useState<ActaCompliance[]>([]);
+  const [loadingCompliance, setLoadingCompliance] = useState(false);
+  const [compliancePage, setCompliancePage] = useState(1);
+  const [complianceTotalPages, setComplianceTotalPages] = useState(0);
+
+  // 1. Fetch Usuario (Carga Inicial)
   useEffect(() => {
     if (userId) {
       setLoadingUser(true);
@@ -76,7 +89,7 @@ export default function UserDetailsPage() {
     }
   }, [userId, router]);
 
-  // 2. Fetch de Actas (Solo si estamos en la pestaña 'actas' o cambia la página)
+  // 2. Fetch Actas Elaboradas (Solo si tab === 'actas')
   useEffect(() => {
     if (userId && currentTab === 'actas') {
       setLoadingActas(true);
@@ -87,14 +100,31 @@ export default function UserDetailsPage() {
         })
         .catch((err) => {
           console.error(err);
-          toast.error("Error al cargar el historial de actas");
+          toast.error("Error al cargar actas elaboradas");
         })
         .finally(() => setLoadingActas(false));
     }
   }, [userId, currentTab, actasPage]);
 
+  // 3. Fetch Compliance (Solo si tab === 'compliance')
+  useEffect(() => {
+    if (userId && currentTab === 'compliance') {
+      setLoadingCompliance(true);
+      adminService.getUserCompliance(userId, { page: compliancePage, limit: 10 })
+        .then((response) => {
+          setComplianceData(response.data);
+          setComplianceTotalPages(response.meta.totalPages);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Error al cargar historial de compliance");
+        })
+        .finally(() => setLoadingCompliance(false));
+    }
+  }, [userId, currentTab, compliancePage]);
+
   const handleTabChange = (value: string) => {
-    // Al cambiar de tab, actualizamos la URL pero mantenemos el historial limpio
+    // Actualizamos URL para mantener el estado al recargar
     router.replace(`/dashboard/usuarios/${userId}?tab=${value}`);
   };
 
@@ -157,7 +187,7 @@ export default function UserDetailsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* --- PESTAÑA PERFIL --- */}
+        {/* --- TAB: PERFIL --- */}
         <TabsContent value="perfil" className="mt-6">
           <Card>
             <CardHeader>
@@ -224,18 +254,18 @@ export default function UserDetailsPage() {
           </Card>
         </TabsContent>
 
-        {/* --- PESTAÑA ACTAS (IMPLEMENTADA) --- */}
+        {/* --- TAB: ACTAS ELABORADAS --- */}
         <TabsContent value="actas" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle>Historial de Actas</CardTitle>
               <CardDescription>
-                Actas asociadas a {user.nombre} {user.apellido}.
+                Actas elaboradas asociadas a {user.nombre} {user.apellido}.
               </CardDescription>
             </CardHeader>
             <CardContent>
-               <DataTable 
-                  columns={columns} // Usamos las mismas columnas que Actas Elaboradas
+               <ActasDataTable 
+                  columns={actasColumns} 
                   data={actas}
                   pageCount={actasTotalPages}
                   currentPage={actasPage}
@@ -246,15 +276,30 @@ export default function UserDetailsPage() {
           </Card>
         </TabsContent>
 
-        {/* --- PESTAÑA COMPLIANCE --- */}
+        {/* --- TAB: COMPLIANCE (INTEGRADO) --- */}
         <TabsContent value="compliance" className="mt-6">
            <Card>
-            <CardHeader><CardTitle>Compliance</CardTitle></CardHeader>
-            <CardContent className="text-muted-foreground py-8 text-center">En construcción</CardContent>
+            <CardHeader>
+              <CardTitle>Historial de Compliance</CardTitle>
+              <CardDescription>
+                Evaluaciones de cumplimiento asociadas a {user.nombre}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+               {/* Inyectamos la tabla de compliance reutilizada */}
+               <ComplianceDataTable 
+                  columns={complianceColumns} 
+                  data={complianceData}
+                  pageCount={complianceTotalPages}
+                  currentPage={compliancePage}
+                  onPageChange={setCompliancePage}
+                  isLoading={loadingCompliance}
+               />
+            </CardContent>
           </Card>
         </TabsContent>
 
-        {/* --- PESTAÑA ELIMINAR --- */}
+        {/* --- TAB: ELIMINAR --- */}
         <TabsContent value="eliminar" className="mt-6">
           <Card className="border-red-200">
             <CardHeader className="bg-red-50/50">
