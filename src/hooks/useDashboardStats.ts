@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { dashboardService } from '@/services/dashboardService';
+import { actasService } from '@/services/actasService';
 import {
   ActasStatsResponse,
   ComplianceStatsResponse,
@@ -111,9 +111,9 @@ export function useDashboardStats(): UseDashboardStatsReturn {
     try {
       // Ejecutar las 3 llamadas en paralelo
       const [actasStats, complianceStats, allActas] = await Promise.all([
-        dashboardService.getActasStats(),
-        dashboardService.getComplianceStats(),
-        dashboardService.getAllActas(),
+        actasService.getActasStats(),
+        actasService.getComplianceStats(),
+        actasService.getAllActasAdmin({ limit: 1000, page: 1 }),
       ]);
 
       // Procesar datos para las 4 cards KPI (del endpoint /actas/admin/stats)

@@ -27,7 +27,7 @@ const ActionCell = ({ user }: { user: User }) => {
   const handleUpgradeToPro = async () => {
     try {
       toast.info('Procesando ascenso...');
-      await adminService.upgradeUserToPro(user.id);
+      await adminService.updateUserRole(user.id, 'PAID_USER');
       toast.success('Usuario ascendido a PRO exitosamente');
       window.location.reload();
     } catch (error) {

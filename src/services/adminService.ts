@@ -44,16 +44,12 @@ export const adminService = {
     return response.data;
   },
 
-  // Helpers de Roles
-  upgradeUserToPro: async (id: string) => {
-    const response = await api.put<User>(`/admin/users/${id}`, {
-      role: 'PAID_USER',
+  // Actualizar rol de usuario
+  updateUserRole: async (userId: string, newRole: string) => {
+    const response = await api.patch<User>('/admin/users/role', {
+      userId,
+      newRole,
     });
-    return response.data;
-  },
-
-  updateUserRole: async (id: string, role: string) => {
-    const response = await api.put<User>(`/admin/users/${id}`, { role });
     return response.data;
   },
 

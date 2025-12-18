@@ -1,5 +1,10 @@
 import api from '@/lib/axios';
-import { ActasResponse, GetActasParams } from '@/types/acta';
+import {
+  ActasResponse,
+  GetActasParams,
+  ActasStatsResponse,
+  ComplianceStatsResponse,
+} from '@/types/acta';
 
 // Definimos una interfaz simple para la respuesta de envío de correo
 interface SendEmailResponse {
@@ -8,6 +13,26 @@ interface SendEmailResponse {
 }
 
 export const actasService = {
+  /**
+   * Obtiene estadísticas generales de actas
+   * Endpoint: GET /actas/admin/stats
+   */
+  getActasStats: async (): Promise<ActasStatsResponse> => {
+    const response = await api.get<ActasStatsResponse>('/actas/admin/stats');
+    return response.data;
+  },
+
+  /**
+   * Obtiene estadísticas de compliance/auditorías
+   * Endpoint: GET /acta-compliance/admin/stats
+   */
+  getComplianceStats: async (): Promise<ComplianceStatsResponse> => {
+    const response = await api.get<ComplianceStatsResponse>(
+      '/acta-compliance/admin/stats'
+    );
+    return response.data;
+  },
+
   getAllActasAdmin: async (params: GetActasParams): Promise<ActasResponse> => {
     const response = await api.get<ActasResponse>('/actas/admin/all', {
       params,

@@ -52,3 +52,29 @@ export interface GetActasParams {
   search?: string;
   status?: ActaStatus;
 }
+
+// Respuesta de GET /actas/admin/stats
+export interface ActasStatsResponse {
+  totalActas: number;
+  totalActasActivas: number;
+  statsByStatus: {
+    GUARDADA: number;
+    COMPLETADA: number;
+    ENTREGADA: number;
+    DESCARGADA: number;
+    ENVIADA: number;
+  };
+}
+
+// Respuesta de GET /acta-compliance/admin/stats
+export interface ComplianceStatsResponse {
+  totalCompliance: number;
+  totalRelevantes: number;
+  statsByStatus: {
+    GUARDADA: number;
+    COMPLETADA: number;
+    ENTREGADA: number;
+    DESCARGADA: number;
+    ENVIADA: number;
+  };
+}
