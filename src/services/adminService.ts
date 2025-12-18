@@ -40,8 +40,10 @@ export const adminService = {
     return response.data;
   },
 
+// --- MODIFICACIÓN AQUÍ ---
+  // Cambiamos el endpoint a /users/admin/{id} según tu requerimiento explícito
   deleteUser: async (id: string) => {
-    const response = await api.delete(`/admin/users/${id}`);
+    const response = await api.delete(`/users/admin/${id}`);
     return response.data;
   },
 

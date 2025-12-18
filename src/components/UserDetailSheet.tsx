@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaEye } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { adminService } from '@/services/adminService';
-import { User } from '@/types/user';
+import { User } from '@/types/user'; 
+import { AxiosError } from 'axios'; // Import necesario para tipar el error
 
 import {
   Sheet,
@@ -35,13 +37,8 @@ interface UserDetailSheetProps {
   userId: string;
 }
 
-// 1. Definición local del Perfil para evitar 'any'
-interface UserProfile {
-  institucion?: string;
-  cargo?: string;
-}
-
 export function UserDetailSheet({ userId }: UserDetailSheetProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,16 +48,12 @@ export function UserDetailSheet({ userId }: UserDetailSheetProps) {
     if (open && userId) {
       setLoading(true);
       adminService.getUserById(userId)
-        .then((data) => {
-          setUser(data);
-        })
+        .then((data) => setUser(data))
         .catch((err) => {
           console.error(err);
           toast.error("Error al cargar detalles del usuario");
         })
-        .finally(() => {
-          setLoading(false);
-        });
+        .finally(() => setLoading(false));
     }
   }, [open, userId]);
 
@@ -68,131 +61,140 @@ export function UserDetailSheet({ userId }: UserDetailSheetProps) {
     setIsDeleting(true);
     try {
       await adminService.deleteUser(userId);
+      
       toast.success("Usuario eliminado correctamente");
       setOpen(false);
       window.location.reload(); 
-    } catch (error) {
-      console.error(error);
-      toast.error("Error al eliminar usuario");
+
+    } catch (error: unknown) { // CORRECCIÓN 1: Usamos 'unknown' en lugar de 'any'
+      console.error("Error eliminando usuario:", error);
+      let msg = "No se pudo eliminar el usuario.";
+      
+      // Tipado seguro del error
+      if (error instanceof AxiosError && error.response?.data?.message) {
+         const serverMsg = error.response.data.message;
+         msg = Array.isArray(serverMsg) ? serverMsg[0] : serverMsg;
+      }
+      
+      toast.error(msg);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // 2. CORRECCIÓN LÍNEA 85: Tipado seguro en lugar de 'as any'
-  const profile = (user as User & { profile?: UserProfile })?.profile || {};
+  // CORRECCIÓN 2: Ya no marca error porque agregamos 'profile' a la interfaz User
+  const profile = user?.profile || {};
+
+  // CORRECCIÓN 3: Construimos el nombre completo
+  const nombreCompleto = user ? `${user.nombre} ${user.apellido || ''}`.trim() : '';
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 p-0 text-foreground hover:bg-muted"
-        >
-          <FaEye className="h-4 w-4" /> 
-          <span className="sr-only">Ver detalles</span>
+        <Button variant="ghost" size="icon" title="Ver detalles">
+          <FaEye className="h-4 w-4 text-gray-500" />
         </Button>
       </SheetTrigger>
       
-      <SheetContent className="!animate-none !transition-none sm:max-w-md overflow-y-auto">
+      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Detalles del Usuario</SheetTitle>
           <SheetDescription>
-            Visualización de datos registrados. Modo solo lectura.
+            Información completa y acciones para el usuario seleccionado.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="py-6 space-y-6">
+        <div className="mt-6 space-y-6">
           {loading ? (
-            <div className="flex justify-center py-10">
+            <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : user ? (
             <>
-              {/* Sección: Información Personal */}
+              {/* Sección 1: Información Personal */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Información Personal</h3>
-                
-                <div className="grid gap-2">
-                  <Label>Nombre Completo</Label>
-                  <Input 
-                    value={`${user.nombre || ''} ${user.apellido || ''}`.trim()} 
-                    readOnly 
-                    className="bg-muted text-muted-foreground focus-visible:ring-0" 
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Correo Electrónico</Label>
-                  <Input 
-                    value={user.email} 
-                    readOnly 
-                    className="bg-muted text-muted-foreground focus-visible:ring-0" 
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Teléfono</Label>
-                  {/* 3. CORRECCIÓN LÍNEA 142: Eliminado 'as any', ya existe en User */}
-                  <Input 
-                    value={user.telefono || 'No registrado'} 
-                    readOnly 
-                    className="bg-muted text-muted-foreground focus-visible:ring-0" 
-                  />
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  Información Personal
+                </h3>
+                <div className="grid gap-4">
+                  <div className="space-y-1">
+                    <Label>Nombre Completo</Label>
+                    {/* CORRECCIÓN 3: Usamos la variable construida */}
+                    <Input value={nombreCompleto} readOnly className="bg-muted" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Email</Label>
+                    <Input value={user.email || ''} readOnly className="bg-muted" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Rol</Label>
+                    <Input value={user.role || ''} readOnly className="bg-muted" />
+                  </div>
                 </div>
               </div>
 
               <Separator />
 
-              {/* Sección: Información Institucional */}
+              {/* Sección 2: Perfil Profesional */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Perfil Institucional</h3>
-                
-                <div className="grid gap-2">
-                  <Label>Institución</Label>
-                  <Input 
-                    value={profile.institucion || 'No asignada'} 
-                    readOnly 
-                    className="bg-muted text-muted-foreground focus-visible:ring-0" 
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Cargo</Label>
-                  <Input 
-                    value={profile.cargo || 'No asignado'} 
-                    readOnly 
-                    className="bg-muted text-muted-foreground focus-visible:ring-0" 
-                  />
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  Perfil Profesional
+                </h3>
+                <div className="grid gap-4">
+                  <div className="space-y-1">
+                    <Label>Institución</Label>
+                    <Input value={profile.institucion || 'N/A'} readOnly className="bg-muted" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Cargo</Label>
+                    <Input value={profile.cargo || 'N/A'} readOnly className="bg-muted" />
+                  </div>
                 </div>
               </div>
 
-              <Separator className="my-4" />
+              <Separator />
 
-              <div className="pt-2">
+              {/* Sección 3: ZONA DE PELIGRO */}
+              <div className="rounded-md border border-red-200 bg-red-50 p-4 dark:bg-red-900/10">
+                <h3 className="mb-2 text-sm font-bold text-red-800 dark:text-red-400 flex items-center gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Zona de Peligro
+                </h3>
+                <p className="mb-4 text-xs text-red-600/80 dark:text-red-400/80">
+                  La eliminación de un usuario es una acción permanente y no se puede deshacer.
+                </p>
+                
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" className="w-full">
-                      <Trash2 className="mr-2 h-4 w-4" />
                       Eliminar Usuario
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="!animate-none">
+                  <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>¿Está seguro de eliminar este usuario?</AlertDialogTitle>
+                      <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Esta acción es irreversible e inmediata. El usuario perderá acceso al sistema permanentemente.
+                        Esta acción eliminará permanentemente al usuario <strong>{user.email}</strong> y todos sus datos asociados. Esta acción no se puede deshacer.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>NO</AlertDialogCancel>
+                      <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
                       <AlertDialogAction 
-                        onClick={handleDelete} 
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDelete();
+                        }} 
+                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                         disabled={isDeleting}
                       >
-                        {isDeleting ? 'Eliminando...' : 'SÍ, ELIMINAR'}
+                        {isDeleting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Eliminando...
+                          </>
+                        ) : (
+                          'Sí, eliminar usuario'
+                        )}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -200,8 +202,8 @@ export function UserDetailSheet({ userId }: UserDetailSheetProps) {
               </div>
             </>
           ) : (
-            <div className="text-center py-4 text-red-500">
-              No se pudo cargar la información del usuario.
+            <div className="text-center py-8 text-muted-foreground">
+              No se encontró información del usuario.
             </div>
           )}
         </div>

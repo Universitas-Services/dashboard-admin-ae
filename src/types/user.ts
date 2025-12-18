@@ -1,9 +1,14 @@
 // src/types/user.ts
 
-// Mapea el Enum UserRole de Prisma del Backend
 export type UserRole = 'USER' | 'PAID_USER' | 'ADMIN';
 
-// Estructura del Usuario que devuelve el endpoint GET /admin/users
+// 1. Definimos la interfaz del perfil aquí para reutilizarla
+export interface UserProfile {
+  institucion?: string;
+  cargo?: string;
+  // Puedes agregar otros campos del perfil si existen
+}
+
 export interface User {
   id: string;
   email: string;
@@ -16,6 +21,8 @@ export interface User {
   profileCompleted: boolean;
   createdAt: string;
   updatedAt: string;
+  // 2. Agregamos la propiedad profile opcional
+  profile?: UserProfile; 
 }
 
 export interface AdminUser {
@@ -23,7 +30,6 @@ export interface AdminUser {
   email: string;
 }
 
-// Estructura de la metadata de paginación que devuelve el backend
 export interface PaginationMeta {
   totalItems: number;
   itemCount: number;
@@ -32,13 +38,11 @@ export interface PaginationMeta {
   currentPage: number;
 }
 
-// Respuesta completa de la lista de usuarios
 export interface UsersResponse {
   data: User[];
   meta: PaginationMeta;
 }
 
-// Filtros para la consulta (DTO)
 export interface GetUsersParams {
   page?: number;
   limit?: number;
