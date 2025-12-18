@@ -1,5 +1,6 @@
 import api from '@/lib/axios';
-import { ActasResponse, GetActasParams } from '@/types/acta';
+import { ActasResponse, GetActasParams, ActaInfoDetails } from '@/types/acta';
+
 
 // Definimos una interfaz simple para la respuesta de envío de correo
 interface SendEmailResponse {
@@ -26,6 +27,12 @@ export const actasService = {
 sendActaDocx: async (id: string): Promise<SendEmailResponse> => {
     // Agregamos {} como body vacío para asegurar que la petición POST sea válida
     const response = await api.post<SendEmailResponse>(`/actas/${id}/enviar-docx`, {});
+    return response.data;
+  },
+
+  // 3. Obtener información detallada de los involucrados (NUEVO)
+  getActaInfo: async (id: string): Promise<ActaInfoDetails> => {
+    const response = await api.get<ActaInfoDetails>(`/actas/admin/${id}/info`);
     return response.data;
   },
 };

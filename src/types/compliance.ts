@@ -24,3 +24,10 @@ export interface GetComplianceParams {
   limit?: number;
   search?: string;
 }
+
+export interface ComplianceInfoDetails {
+  email: string;
+  nombreevaluador: string; // Respetando minúsculas según API
+  denominacionCargo: string;
+  nombreUnidad: string;
+}

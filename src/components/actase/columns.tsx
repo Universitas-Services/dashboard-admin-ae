@@ -6,23 +6,22 @@ import { Acta, ActaStatus } from '@/types/acta';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MoreHorizontal, Download, Send } from 'lucide-react'; // Eliminé el icono Copy
+import { MoreHorizontal, Download, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { actasService } from '@/services/actasService';
+import { ActaDetailsSheet } from './ActaDetailsSheet'; // Importamos tu nuevo componente
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  // DropdownMenuSeparator, // Ya no es necesario si no separamos grupos
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// --- COMPONENTE INTERNO PARA MANEJAR ACCIONES ---
+// --- COMPONENTE INTERNO PARA MANEJAR ACCIONES (Dropdown de 3 puntos) ---
 const ActaActionCell = ({ acta }: { acta: Acta }) => {
   
-  // Bloqueamos acciones si el estado es explícitamente "GUARDADA"
   const isGuardada = acta.status === 'GUARDADA';
 
   const handleDownload = async () => {
@@ -93,7 +92,6 @@ const ActaActionCell = ({ acta }: { acta: Acta }) => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
         
-        {/* OPCIÓN 1: DESCARGAR */}
         <DropdownMenuItem 
             onClick={handleDownload} 
             className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
@@ -102,7 +100,6 @@ const ActaActionCell = ({ acta }: { acta: Acta }) => {
           Descargar DOCX
         </DropdownMenuItem>
 
-        {/* OPCIÓN 2: ENVIAR */}
         <DropdownMenuItem 
             onClick={handleSendEmail} 
             className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
@@ -233,9 +230,21 @@ export const columns: ColumnDef<Acta>[] = [
       );
     },
   },
+  // ESTA ES LA ÚNICA DEFINICIÓN DE LA COLUMNA ACCIONES
   {
     id: 'actions',
     header: 'Opciones',
-    cell: ({ row }) => <ActaActionCell acta={row.original} />,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1">
+        {/* Tu nuevo Sheet */}
+        <ActaDetailsSheet 
+            actaId={row.original.id} 
+            numeroActa={row.original.numeroActa} 
+        />
+        
+        {/* El menú de 3 puntos original */}
+        <ActaActionCell acta={row.original} />
+      </div>
+    ),
   },
 ];

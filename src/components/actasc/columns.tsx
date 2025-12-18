@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MoreHorizontal, Download, Send, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { complianceService } from '@/services/complianceService';
+import { ComplianceDetailsSheet } from './ComplianceDetailsSheet'; // Importamos el nuevo componente
 
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ const getStatusVariant = (status: string) => {
   }
 };
 
+// --- Componente interno para Dropdown de 3 puntos ---
 const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
   
   const isGuardada = acta.status === 'Guardada';
@@ -45,11 +47,7 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
     const toastId = toast.loading('Descargando PDF...');
     
     try {
-      // 1. Definimos el nombre del archivo aquí
       const fileName = `Compliance-${acta.numeroCompliance || 'Borrador'}.pdf`;
-
-      // 2. Llamamos al servicio refactorizado
-      // La lógica del Blob y el link <a> ahora ocurre dentro de esta función
       await complianceService.downloadCompliancePdf(acta.id, fileName);
       
       toast.dismiss(toastId);
@@ -59,11 +57,8 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
       console.error("Error en descarga:", error);
       let errorMessage = 'Error al descargar el documento.';
       
-      // Mantenemos la lógica de lectura de errores en Blobs 
-      // (necesario porque si falla, axios devuelve un Blob con el JSON de error dentro)
       if (axios.isAxiosError(error) && error.response) {
         const data = error.response.data;
-        
         if (data instanceof Blob) {
             try {
                 const text = await data.text();
@@ -76,7 +71,6 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
         else if (data?.message) {
             errorMessage = data.message;
         }
-
         if (Array.isArray(errorMessage)) {
             errorMessage = errorMessage[0];
         }
@@ -138,7 +132,6 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
             onClick={handleDownload}
             className={isGuardada ? "opacity-50 cursor-not-allowed" : ""}
         >
-          {/* Cambiado a rojo para indicar PDF */}
           <Download className="mr-2 h-4 w-4 text-red-600" />
           Descargar PDF
         </DropdownMenuItem>
@@ -156,6 +149,7 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
   );
 };
 
+// --- Definición de columnas ---
 export const columns: ColumnDef<ActaCompliance>[] = [
   {
     id: "select",
@@ -212,7 +206,6 @@ export const columns: ColumnDef<ActaCompliance>[] = [
         const score = row.getValue('puntajeCalculado') as number;
         const colorClass = score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
         
-        // Lógica aplicada: (score ?? 0) asegura que no sea nulo, y .toFixed(2) fuerza los decimales
         return (
             <div className={`font-bold ${colorClass}`}>
                 {(score ?? 0).toFixed(2)} pts
@@ -232,9 +225,21 @@ export const columns: ColumnDef<ActaCompliance>[] = [
       );
     },
   },
+  // ESTA ES LA ÚNICA DEFINICIÓN DE LA COLUMNA ACCIONES
   {
     id: 'actions',
     header: 'Opciones',
-    cell: ({ row }) => <ActionCell acta={row.original} />,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1">
+        {/* Tu nuevo Sheet */}
+        <ComplianceDetailsSheet 
+            actaId={row.original.id} 
+            numeroCompliance={row.original.numeroCompliance} 
+        />
+        
+        {/* El menú de 3 puntos original */}
+        <ActionCell acta={row.original} />
+      </div>
+    ),
   },
 ];

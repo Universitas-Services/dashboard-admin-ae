@@ -41,3 +41,20 @@ export interface GetActasParams {
   search?: string;
   status?: ActaStatus;
 }
+
+// NUEVA INTERFAZ: Detalles extendidos del acta elaborada
+export interface ActaInfoDetails {
+  email: string;
+  nombreServidorSaliente: string;
+  designacionServidorSaliente: string;
+  nombreServidorRecibe: string;
+  designacionServidorRecibe: string;
+  nombreServidorEntrante: string;
+  designacionServidorEntrante: string;
+  nombreAuditor: string;
+  profesionAuditor: string;
+  nombreTestigo1: string;
+  profesionTestigo1: string;
+  nombreTestigo2: string;
+  profesionTestigo2: string;
+}

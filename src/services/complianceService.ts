@@ -1,6 +1,6 @@
 // complianceService.ts
 import api from '@/lib/axios';
-import { ComplianceResponse, GetComplianceParams } from '@/types/compliance';
+import { ComplianceResponse, GetComplianceParams, ComplianceInfoDetails } from '@/types/compliance';
 
 interface SendEmailResponse {
   message: string;
@@ -44,6 +44,12 @@ export const complianceService = {
   // 3. Enviar Correo
   sendComplianceEmail: async (id: string): Promise<SendEmailResponse> => {
     const response = await api.post<SendEmailResponse>(`/acta-compliance/admin/${id}/email`, {});
+    return response.data;
+  },
+
+  // 4. Obtener información detallada (NUEVO)
+  getComplianceInfo: async (id: string): Promise<ComplianceInfoDetails> => {
+    const response = await api.get<ComplianceInfoDetails>(`/acta-compliance/admin/${id}/info`);
     return response.data;
   },
 };
