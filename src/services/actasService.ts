@@ -4,6 +4,7 @@ import {
   GetActasParams,
   ActasStatsResponse,
   ComplianceStatsResponse,
+  ActaInfoDetails,
 } from '@/types/acta';
 
 // Definimos una interfaz simple para la respuesta de envío de correo
@@ -56,6 +57,12 @@ export const actasService = {
       `/actas/${id}/enviar-docx`,
       {}
     );
+    return response.data;
+  },
+
+  // 3. Obtener información detallada de los involucrados (NUEVO)
+  getActaInfo: async (id: string): Promise<ActaInfoDetails> => {
+    const response = await api.get<ActaInfoDetails>(`/actas/admin/${id}/info`);
     return response.data;
   },
 };
