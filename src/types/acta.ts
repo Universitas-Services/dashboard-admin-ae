@@ -1,5 +1,16 @@
-export type ActaStatus = 'GUARDADA' | 'COMPLETADA' | 'ENTREGADA' | 'DESCARGADA' | 'ENVIADA';
-export type ActaType = 'ENTRANTE_GRATIS' | 'SALIENTE_GRATIS' | 'MAXIMA_AUTORIDAD_GRATIS' | 'MAXIMA_AUTORIDAD_PAGA' | 'ENTRANTE_PAGA' | 'SALIENTE_PAGA';
+export type ActaStatus =
+  | 'GUARDADA'
+  | 'COMPLETADA'
+  | 'ENTREGADA'
+  | 'DESCARGADA'
+  | 'ENVIADA';
+export type ActaType =
+  | 'ENTRANTE_GRATIS'
+  | 'SALIENTE_GRATIS'
+  | 'MAXIMA_AUTORIDAD_GRATIS'
+  | 'MAXIMA_AUTORIDAD_PAGA'
+  | 'ENTRANTE_PAGA'
+  | 'SALIENTE_PAGA';
 
 export interface ActaMetadata {
   rifOrgano?: string;
@@ -14,11 +25,11 @@ export interface Acta {
   status: ActaStatus;
   metadata: ActaMetadata;
   userId: string;
-  createdAt: string; 
+  createdAt: string;
   updatedAt: string;
   isCompleted: boolean;
-  tiempoRealizacion: number; 
-  diasRestantes?: number;    
+  tiempoRealizacion: number;
+  diasRestantes?: number;
   alertaVencimiento?: boolean;
 }
 
@@ -40,4 +51,21 @@ export interface GetActasParams {
   limit?: number;
   search?: string;
   status?: ActaStatus;
+}
+
+// NUEVA INTERFAZ: Detalles extendidos del acta elaborada
+export interface ActaInfoDetails {
+  email: string;
+  nombreServidorSaliente: string;
+  designacionServidorSaliente: string;
+  nombreServidorRecibe: string;
+  designacionServidorRecibe: string;
+  nombreServidorEntrante: string;
+  designacionServidorEntrante: string;
+  nombreAuditor: string;
+  profesionAuditor: string;
+  nombreTestigo1: string;
+  profesionTestigo1: string;
+  nombreTestigo2: string;
+  profesionTestigo2: string;
 }

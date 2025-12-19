@@ -1,6 +1,7 @@
 import api from '@/lib/axios';
 import { User } from '@/types/user';
 import { ActasResponse, GetActasParams } from '@/types/acta';
+import { ComplianceResponse, GetComplianceParams } from '@/types/compliance';
 
 // 1. Definimos los tipos para los parámetros y la respuesta paginada de Usuarios
 export interface GetUsersParams {
@@ -39,14 +40,18 @@ export const adminService = {
     return response.data;
   },
 
+  // --- MODIFICACIÓN AQUÍ ---
+  // Cambiamos el endpoint a /users/admin/{id} según tu requerimiento explícito
   deleteUser: async (id: string) => {
-    const response = await api.delete(`/admin/users/${id}`);
+    const response = await api.delete(`/users/admin/${id}`);
     return response.data;
   },
 
   // Helpers de Roles
   upgradeUserToPro: async (id: string) => {
-    const response = await api.put<User>(`/admin/users/${id}`, { role: 'PAID_USER' });
+    const response = await api.put<User>(`/admin/users/${id}`, {
+      role: 'PAID_USER',
+    });
     return response.data;
   },
 
@@ -56,8 +61,26 @@ export const adminService = {
   },
 
   // Actas del usuario
-  getUserActas: async (userId: string, params: GetActasParams): Promise<ActasResponse> => {
-    const response = await api.get<ActasResponse>(`/admin/users/${userId}/actas`, { params });
+  getUserActas: async (
+    userId: string,
+    params: GetActasParams
+  ): Promise<ActasResponse> => {
+    const response = await api.get<ActasResponse>(
+      `/admin/users/${userId}/actas`,
+      { params }
+    );
     return response.data;
-  }
+  },
+
+  // --- ACTAS COMPLIANCE (ESTA ES LA QUE FALTABA) ---
+  getUserCompliance: async (
+    userId: string,
+    params: GetComplianceParams
+  ): Promise<ComplianceResponse> => {
+    const response = await api.get<ComplianceResponse>(
+      `/admin/users/${userId}/actas-compliance`,
+      { params }
+    );
+    return response.data;
+  },
 };
