@@ -1,64 +1,59 @@
-import { AdminUser } from '@/types/user';
+import { AuthTokenResponse } from '@/services/authService';
 
-const ACCESS_TOKEN_KEY = 'accessToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
-const USER_DATA_KEY = 'UserData'; // Mantenemos tu key
+const ACCESS_TOKEN_KEY = 'accessToken'; // Clave interna en localStorage
+const REFRESH_TOKEN_KEY = 'refreshToken'; // Clave interna en localStorage
 
+// Verificación de entorno (Next.js SSR safety)
 const isBrowser = typeof window !== 'undefined';
 
-// --- ACCESS TOKEN ---
+// --- Getters y Setters Básicos ---
+
 export const getAccessToken = (): string | null => {
   if (!isBrowser) return null;
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
-export const setAccessToken = (token: string | null) => {
-  if (!isBrowser) return;
-  if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token);
-  else localStorage.removeItem(ACCESS_TOKEN_KEY);
-};
-
-// --- REFRESH TOKEN ---
 export const getRefreshToken = (): string | null => {
   if (!isBrowser) return null;
   return localStorage.getItem(REFRESH_TOKEN_KEY);
 };
 
-export const setRefreshToken = (token: string | null) => {
+export const setAccessToken = (token: string | null) => {
   if (!isBrowser) return;
-  if (token) localStorage.setItem(REFRESH_TOKEN_KEY, token);
-  else localStorage.removeItem(REFRESH_TOKEN_KEY);
-};
-
-// --- USER DATA (AdminUser) ---
-export const getUserData = (): AdminUser | null => {
-  if (!isBrowser) return null;
-  const data = localStorage.getItem(USER_DATA_KEY);
-  try {
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
   }
 };
 
-export const setUserData = (user: AdminUser | null) => {
+export const setRefreshToken = (token: string | null) => {
   if (!isBrowser) return;
-  if (user) localStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
-  else localStorage.removeItem(USER_DATA_KEY);
+  if (token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
 };
 
-// --- HELPERS GLOBALES ---
+// --- Funciones Compuestas ---
+
+// Guarda ambos tokens recibidos del backend
+export const setAuthTokens = (tokens: AuthTokenResponse | null) => {
+  if (tokens) {
+    // Aquí mapeamos la respuesta snake_case del backend a nuestro storage
+    setAccessToken(tokens.access_token);
+    setRefreshToken(tokens.refresh_token);
+  } else {
+    clearAuthStorage();
+  }
+};
+
 export const clearAuthStorage = () => {
   if (!isBrowser) return;
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(USER_DATA_KEY);
-  localStorage.removeItem('auth-storage'); // Limpieza de basura vieja
-};
-
-export const setAuthTokens = (tokens: { access_Token: string; refresh_Token: string }) => {
-  setAccessToken(tokens.access_Token);
-  setRefreshToken(tokens.refresh_Token);
+  // Limpia cualquier otro dato de sesión si existiera
 };
 
 export const getIsAuthenticated = (): boolean => {

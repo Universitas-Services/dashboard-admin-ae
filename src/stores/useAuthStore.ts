@@ -1,140 +1,124 @@
 import { create } from 'zustand';
-import {jwtDecode} from 'jwt-decode';
-import { authService, LoginFormData } from '@/services/authService';
-import { AdminUser } from '@/types/user';
+import { jwtDecode } from 'jwt-decode';
+import { authService, LoginCredentials } from '@/services/authService';
 import {
+  setAuthTokens,
+  clearAuthStorage,
   getAccessToken,
   getRefreshToken,
-  getUserData,
-  getIsAuthenticated,
-  setAuthTokens,
-  setUserData,
-  clearAuthStorage,
 } from '@/lib/authStorage';
-
-interface DecodedToken {
-  exp: number;
-}
 
 interface AuthState {
   status: 'idle' | 'loading' | 'error';
   isAuthenticated: boolean;
-  user: AdminUser | null;
-  
+
   // Acciones
-  login: (data: LoginFormData) => Promise<void>;
+  login: (data: LoginCredentials) => Promise<void>;
   logout: () => void;
   checkAuthOnLoad: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  // 1. INICIALIZACIÓN SÍNCRONA (Como en la referencia)
-  // Al cargar la app, esto lee directo del localStorage.
   status: 'idle',
-  isAuthenticated: getIsAuthenticated(),
-  user: getUserData(),
+  isAuthenticated: false,
 
-  login: async (credentials) => {
+  login: async (data) => {
     if (get().status === 'loading') return;
     set({ status: 'loading' });
 
     try {
-      // 1. Login API
-      const response = await authService.login(credentials);
-
-      // 2. Guardar Tokens
-      setAuthTokens({
-        access_Token: response.access_Token,
-        refresh_Token: response.refresh_Token,
-      });
-
-      // NOTA: No llamar a /me automáticamente. El componente UI solicitará el perfil cuando lo necesite.
+      const tokens = await authService.login(data);
+      setAuthTokens(tokens);
       set({
         isAuthenticated: true,
-        user: null,
         status: 'idle',
       });
-      
     } catch (error) {
-      set({ status: 'error' });
+      set({ status: 'error', isAuthenticated: false });
       throw error;
     }
   },
 
   logout: () => {
-    if (!get().isAuthenticated) return;
-
-    // Llamada al backend (fire & forget)
-    authService.logout().catch(console.error);
-
-    // Limpieza Local
     clearAuthStorage();
-
-    // Reset Store
     set({
       isAuthenticated: false,
-      user: null,
       status: 'idle',
     });
-
-    // Redirección forzada (opcional, igual que en referencia)
+    authService
+      .logout()
+      .catch((e) => console.error('Error logout backend:', e));
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
   },
 
   checkAuthOnLoad: async () => {
-    // Si ya estamos validando, no hacer nada
-    if (get().status === 'loading') return;
-    
-    // Si no hay tokens, asegurarnos de que el estado esté limpio
-    const currentAccess = getAccessToken();
-    const currentRefresh = getRefreshToken();
-
-    if (!currentAccess || !currentRefresh) {
-        // Solo hacemos logout si el estado dice que estamos autenticados, para evitar bucles
-        if (get().isAuthenticated) {
-            get().logout();
-        }
-        return;
-    }
+    // Si ya estamos autenticados, no hacemos nada
+    if (get().isAuthenticated) return;
 
     set({ status: 'loading' });
 
-    try {
-        let isExpired = false;
-        try {
-            const decoded = jwtDecode<DecodedToken>(currentAccess);
-            if (decoded.exp * 1000 < Date.now()) {
-                isExpired = true;
-            }
-        } catch {
-            isExpired = true;
+    const token = getAccessToken();
+    const refreshToken = getRefreshToken();
+
+    // 1. Si NO hay refresh token, no hay nada que hacer -> Logout
+    // (El accessToken solo no sirve de mucho si no podemos renovarlo)
+    if (!refreshToken) {
+      set({ isAuthenticated: false, status: 'idle' });
+      return;
+    }
+
+    // Variable para decidir si necesitamos renovar
+    let shouldRefresh = false;
+
+    // 2. Verificamos el Access Token
+    if (!token) {
+      // Si no hay access token pero sí refresh token, intentamos renovar
+      shouldRefresh = true;
+    } else {
+      try {
+        const decoded: { exp: number } = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+
+        // Si expiró o expira en menos de 10 segundos
+        if (decoded.exp < currentTime + 10) {
+          console.log('AuthStore: Token expirado. Se requiere refresh.');
+          shouldRefresh = true;
         }
+      } catch (error) {
+        // --- CORRECCIÓN CLAVE ---
+        // Si jwtDecode falla (token corrupto/invalido manualmente),
+        // NO hacemos logout. Asumimos que necesitamos un token nuevo limpio.
+        console.warn(
+          'AuthStore: Token inválido o corrupto. Intentando refresh...'
+        );
+        shouldRefresh = true;
+      }
+    }
 
-        if (isExpired) {
-            // Token expirado en carga: intentamos refrescar usando el servicio
-            try {
-              const newTokens = await authService.refreshToken(currentRefresh!);
-              setAuthTokens(newTokens);
-              set({ isAuthenticated: true });
-            } catch (e) {
-              // Si no podemos refrescar, hacer logout
-              console.error('Refresh falló en carga:', e);
-              get().logout();
-              return;
-            }
-        } else {
-            // Si el token es válido, confirmamos estado
-            set({ isAuthenticated: true });
-        }
+    // 3. Ejecutamos la lógica de decisión
+    if (shouldRefresh) {
+      try {
+        // Intentamos revivir la sesión con el Refresh Token
+        console.log('AuthStore: Ejecutando refresh token...');
+        const newTokens = await authService.refreshToken(refreshToken);
 
-        // NO llamar a /me aquí; el UI solicitará perfil cuando sea necesario.
-        set({ status: 'idle' });
-
-    } catch (error) {
-        console.error('Error en checkAuthOnLoad:', error);
+        // Si tuvimos éxito:
+        setAuthTokens(newTokens);
+        set({ isAuthenticated: true, status: 'idle' });
+        console.log('AuthStore: Sesión recuperada exitosamente.');
+      } catch (refreshError) {
+        // AHORA SÍ: Si el refresh falla, es el fin del camino.
+        console.error(
+          'AuthStore: Falló el refresh token. Cerrando sesión.',
+          refreshError
+        );
         get().logout();
+      }
+    } else {
+      // El token es válido y no ha expirado
+      set({ isAuthenticated: true, status: 'idle' });
     }
   },
 }));

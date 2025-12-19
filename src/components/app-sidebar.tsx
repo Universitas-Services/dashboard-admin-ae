@@ -62,15 +62,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
 
   const user = {
-    name: 'Luis Comun',
-    email: 'luis852comun@gmail.com',
+    name: 'Admin Admin',
+    email: 'universitasdev@gmail.com',
     avatar: '',
-    initials: 'LC',
+    initials: 'AA',
   };
 
   const handleLogout = () => {
     console.log('Cerrando sesión...');
-    router.push('/');
+    router.replace('/');
   };
 
   return (
