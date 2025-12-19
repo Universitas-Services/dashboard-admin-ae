@@ -1,11 +1,11 @@
 'use client';
 
+import * as React from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getPaginationRowModel, // Necesario aunque paginemos manual para la estructura interna
 } from '@tanstack/react-table';
 
 import {
@@ -17,53 +17,43 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  // Props para paginación server-side
-  pageCount: number;
-  currentPage: number;
-  onPageChange: (page: number) => void;
+  pageCount?: number;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
   isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  pageCount,
-  currentPage,
+  pageCount = 1,
+  currentPage = 1,
   onPageChange,
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
+  const [rowSelection, setRowSelection] = React.useState({});
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    manualPagination: true, // ¡Clave para Server-Side Pagination!
-    pageCount: pageCount,
+    onRowSelectionChange: setRowSelection,
     state: {
-      pagination: {
-        pageIndex: currentPage - 1, // TanStack Table usa índice 0
-        pageSize: 10, // Asumimos 10 por defecto
-      },
+      rowSelection,
     },
-    onPaginationChange: (updater) => {
-      // Manejamos el cambio manualmente via onPageChange
-      if (typeof updater === 'function') {
-        const newState = updater({
-          pageIndex: currentPage - 1,
-          pageSize: 10,
-        });
-        onPageChange(newState.pageIndex + 1);
-      }
-    },
+    manualPagination: true,
+    pageCount: pageCount,
   });
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-white">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -85,13 +75,15 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Skeleton simple o texto de carga
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Cargando actas...
+                  <div className="flex justify-center items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span>Cargando datos de compliance...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
@@ -114,9 +106,9 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-24 text-center text-muted-foreground"
                 >
-                  No se encontraron resultados.
+                  No se encontraron actas de compliance.
                 </TableCell>
               </TableRow>
             )}
@@ -129,18 +121,18 @@ export function DataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1 || isLoading}
+          onClick={() => onPageChange?.(Math.max(currentPage - 1, 1))}
+          disabled={currentPage === 1 || isLoading}
         >
           Anterior
         </Button>
-        <div className="text-sm font-medium">
-          Página {currentPage} de {pageCount}
-        </div>
+        <span className="text-sm text-muted-foreground">
+          Página {currentPage} de {pageCount || 1}
+        </span>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => onPageChange?.(currentPage + 1)}
           disabled={currentPage >= pageCount || isLoading}
         >
           Siguiente

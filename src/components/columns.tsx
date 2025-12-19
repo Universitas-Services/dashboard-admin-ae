@@ -24,11 +24,10 @@ import { User } from '@/types/user';
 
 // --- COMPONENTE INTERNO PARA LA CELDA DE ACCIONES ---
 const ActionCell = ({ user }: { user: User }) => {
-  
   const handleUpgradeToPro = async () => {
     try {
       toast.info('Procesando ascenso...');
-      await adminService.upgradeUserToPro(user.id);
+      await adminService.updateUserRole(user.id, 'PAID_USER');
       toast.success('Usuario ascendido a PRO exitosamente');
       window.location.reload();
     } catch (error) {
@@ -53,13 +52,13 @@ const ActionCell = ({ user }: { user: User }) => {
     <div className="flex items-center gap-1">
       {/* 1. Botón de Ver Detalles (Redirección a Nueva Página) */}
       <Link href={`/dashboard/usuarios/${user.id}`} passHref>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-8 w-8 p-0 text-foreground hover:bg-muted"
           title="Ver detalles del usuario"
         >
-          <FaEye className="h-4 w-4" /> 
+          <FaEye className="h-4 w-4" />
           <span className="sr-only">Ver detalles</span>
         </Button>
       </Link>
@@ -74,7 +73,7 @@ const ActionCell = ({ user }: { user: User }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-          
+
           <DropdownMenuItem
             onClick={() => {
               navigator.clipboard.writeText(user.id);
@@ -83,7 +82,7 @@ const ActionCell = ({ user }: { user: User }) => {
           >
             Copiar ID de usuario
           </DropdownMenuItem>
-          
+
           <DropdownMenuSeparator />
 
           {user.role === 'USER' && (
@@ -101,7 +100,9 @@ const ActionCell = ({ user }: { user: User }) => {
           )}
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>Ver actividad (Próximamente)</DropdownMenuItem>
+          <DropdownMenuItem disabled>
+            Ver actividad (Próximamente)
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -117,7 +118,7 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => (
       <div>
         <div className="font-medium text-gray-900">
-            {row.original.nombre} {row.original.apellido || ''}
+          {row.original.nombre} {row.original.apellido || ''}
         </div>
         <div className="text-sm text-gray-500">{row.getValue('email')}</div>
       </div>
@@ -128,10 +129,12 @@ export const columns: ColumnDef<User>[] = [
     header: 'Rol',
     cell: ({ row }) => {
       const role = row.getValue('role') as string;
-      const variant = 
-        role === 'ADMIN' ? 'destructive' : 
-        role === 'PAID_USER' ? 'default' : 
-        'secondary';
+      const variant =
+        role === 'ADMIN'
+          ? 'destructive'
+          : role === 'PAID_USER'
+            ? 'default'
+            : 'secondary';
       return <Badge variant={variant}>{role}</Badge>;
     },
   },
@@ -141,7 +144,10 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const isActive = row.getValue('isActive') as boolean;
       return (
-        <Badge variant={isActive ? 'outline' : 'destructive'} className={isActive ? 'text-green-600 border-green-600' : ''}>
+        <Badge
+          variant={isActive ? 'outline' : 'destructive'}
+          className={isActive ? 'text-green-600 border-green-600' : ''}
+        >
           {isActive ? 'Activo' : 'Inactivo'}
         </Badge>
       );
@@ -152,7 +158,9 @@ export const columns: ColumnDef<User>[] = [
     header: 'Fecha Registro',
     cell: ({ row }) => {
       const date = new Date(row.getValue('createdAt'));
-      return <div className="text-sm text-gray-500">{date.toLocaleDateString()}</div>;
+      return (
+        <div className="text-sm text-gray-500">{date.toLocaleDateString()}</div>
+      );
     },
   },
   {

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import Link from "next/link";
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Command,
@@ -139,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-                      
+
                       {/* Sub-item 2: Actas Compliance */}
 
                       {/* Sub-item 2: Actas Compliance */}
