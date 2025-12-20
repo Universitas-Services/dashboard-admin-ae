@@ -5,21 +5,24 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import * as z from 'zod';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-
 import { useAuthStore } from '../stores/useAuthStore';
-import { loginSchema, LoginFormData } from '../services/authService';
-
-// Componentes UI
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
 
+const loginSchema = z.object({
+  email: z.string().email('Correo electrónico inválido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export default function LoginForm() {
   const router = useRouter();
 
-  // CORRECCIÓN: Ahora extraemos 'login' en lugar de 'setAuth'
   const login = useAuthStore((state) => state.login);
 
   const [loading, setLoading] = useState(false);
