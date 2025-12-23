@@ -84,22 +84,6 @@ const ActionCell = ({ user }: { user: User }) => {
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
-
-          {user.role === 'USER' && (
-            <DropdownMenuItem onClick={handleUpgradeToPro}>
-              <ShieldCheck className="mr-2 h-4 w-4 text-green-600" />
-              Ascender a PRO
-            </DropdownMenuItem>
-          )}
-
-          {user.role === 'PAID_USER' && (
-            <DropdownMenuItem onClick={handleDowngradeToFree}>
-              <ShieldAlert className="mr-2 h-4 w-4 text-orange-600" />
-              Descender a Gratis
-            </DropdownMenuItem>
-          )}
-
-          <DropdownMenuSeparator />
           <DropdownMenuItem disabled>
             Ver actividad (Próximamente)
           </DropdownMenuItem>
@@ -123,20 +107,6 @@ export const columns: ColumnDef<User>[] = [
         <div className="text-sm text-gray-500">{row.getValue('email')}</div>
       </div>
     ),
-  },
-  {
-    accessorKey: 'role',
-    header: 'Rol',
-    cell: ({ row }) => {
-      const role = row.getValue('role') as string;
-      const variant =
-        role === 'ADMIN'
-          ? 'destructive'
-          : role === 'PAID_USER'
-            ? 'default'
-            : 'secondary';
-      return <Badge variant={variant}>{role}</Badge>;
-    },
   },
   {
     accessorKey: 'isActive',

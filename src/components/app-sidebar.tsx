@@ -54,6 +54,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -61,16 +62,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
 
+  const logout = useAuthStore((state) => state.logout);
+
   const user = {
     name: 'Admin Admin',
-    email: 'universitasdev@gmail.com',
+    email: 'administrador@gmail.com',
     avatar: '',
     initials: 'AA',
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Cerrando sesión...');
-    router.replace('/');
+    await logout();
   };
 
   return (
@@ -80,12 +83,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                  <img
+                    src="/Icono.png"
+                    alt="Logo"
+                    className="size-10 object-contain"
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Admin Panel</span>
-                  <span className="truncate text-xs">Universitas</span>
+                  <span className="truncate text-xs">Administrador</span>
                 </div>
               </a>
             </SidebarMenuButton>

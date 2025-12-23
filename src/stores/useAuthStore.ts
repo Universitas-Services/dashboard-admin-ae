@@ -39,17 +39,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  logout: () => {
-    clearAuthStorage();
-    set({
-      isAuthenticated: false,
-      status: 'idle',
-    });
-    authService
-      .logout()
-      .catch((e) => console.error('Error logout backend:', e));
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+  logout: async () => {
+    try {
+      // 1. Intentamos notificar al backend primero
+      await authService.logout();
+    } catch (e) {
+      console.error('Error logout backend:', e);
+    } finally {
+      // 2. Pase lo que pase (éxito o error), limpiamos el storage y el estado local
+      clearAuthStorage();
+      set({
+        isAuthenticated: false,
+        status: 'idle',
+      });
+
+      // 3. Redirección forzada
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
   },
 
