@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Command,
@@ -61,15 +62,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
 
   const user = {
-    name: 'Luis Comun',
-    email: 'luis852comun@gmail.com',
+    name: 'Admin Admin',
+    email: 'universitasdev@gmail.com',
     avatar: '',
-    initials: 'LC',
+    initials: 'AA',
   };
 
   const handleLogout = () => {
     console.log('Cerrando sesión...');
-    router.push('/');
+    router.replace('/');
   };
 
   return (
@@ -110,10 +111,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {/* Opción Panel de Usuarios */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Panel de usuarios">
-                  <a href="/dashboard/usuarios">
+                  <Link href="/dashboard/usuarios">
                     <Users />
                     <span>Panel de usuarios</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -138,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-                      
+
                       {/* Sub-item 2: Actas Compliance */}
 
                       {/* Sub-item 2: Actas Compliance */}

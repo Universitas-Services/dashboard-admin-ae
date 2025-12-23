@@ -5,23 +5,26 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Eye, EyeOff } from 'lucide-react'; 
-
+import * as z from 'zod';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
-import { loginSchema, LoginFormData } from '../services/authService';
-
-// Componentes UI
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Alert, AlertDescription } from '../components/ui/alert'; 
+import { Alert, AlertDescription } from '../components/ui/alert';
+
+const loginSchema = z.object({
+  email: z.string().email('Correo electrónico inválido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
-  
-  // CORRECCIÓN: Ahora extraemos 'login' en lugar de 'setAuth'
+
   const login = useAuthStore((state) => state.login);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +37,7 @@ export default function LoginForm() {
     },
   });
 
-const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     setError(null);
 
@@ -42,9 +45,9 @@ const onSubmit = async (data: LoginFormData) => {
       await login(data);
 
       // Si no lanza error, el login fue exitoso. Redirigimos.
-      router.replace('/dashboard'); 
-      
-    } catch (err) { // <--- AQUÍ: Simplemente quita ': any'
+      router.replace('/dashboard');
+    } catch (err) {
+      // <--- AQUÍ: Simplemente quita ': any'
       console.error(err);
       // Intentamos mostrar un mensaje útil si el backend lo envía, sino uno genérico
       setError('Credenciales incorrectas o error en el servidor.');
@@ -57,9 +60,7 @@ const onSubmit = async (data: LoginFormData) => {
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Iniciar Sesión</h1>
-        <p className="text-sm text-gray-500">
-          Ingresa al panel administrativo
-        </p>
+        <p className="text-sm text-gray-500">Ingresa al panel administrativo</p>
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -78,19 +79,15 @@ const onSubmit = async (data: LoginFormData) => {
             {...form.register('email')}
           />
           {form.formState.errors.email && (
-            <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+            <p className="text-xs text-red-500">
+              {form.formState.errors.email.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Contraseña</Label>
-            <Link 
-              href="/recuperar-contrasena" 
-              className="text-xs text-blue-600 hover:underline"
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
           </div>
           <div className="relative">
             <Input
@@ -107,7 +104,9 @@ const onSubmit = async (data: LoginFormData) => {
             </button>
           </div>
           {form.formState.errors.password && (
-            <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>
+            <p className="text-xs text-red-500">
+              {form.formState.errors.password.message}
+            </p>
           )}
         </div>
 
