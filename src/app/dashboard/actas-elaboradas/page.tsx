@@ -25,7 +25,7 @@ export default function ActasCreadasPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-    }, 500);
+    }, 800); // 800ms de debounce
     return () => clearTimeout(timer);
   }, [searchTerm]);
 

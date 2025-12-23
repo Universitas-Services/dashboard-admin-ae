@@ -8,7 +8,7 @@ export default function LoginPage() {
       <div className="mb-8 flex justify-center">
         {/* 2. Implementación del Logo SVG */}
         <Image
-          src="/logo-azul.svg" // Busca automáticamente en la carpeta /public
+          src="/LOGO_CON_BORDE.png" // Busca automáticamente en la carpeta /public
           alt="Logo Universitas"
           width={250} // Referencia del ancho original del archivo
           height={80} // Referencia de altura para el cálculo de aspecto
