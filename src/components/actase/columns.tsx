@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { ColumnDef } from '@tanstack/react-table';
 import { AxiosError } from 'axios';
 import { Acta, ActaStatus } from '@/types/acta';
@@ -116,6 +118,57 @@ const ActaActionCell = ({ acta }: { acta: Acta }) => {
   );
 };
 
+// --- COMPONENTE INTERNO PARA LA CELDA DE MORATORIA ---
+const MoratoriaCell = ({ actaId }: { actaId: string }) => {
+  const [dias, setDias] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchDias = async () => {
+      try {
+        const data = await actasService.getDiasRestantes(actaId);
+        if (isMounted) {
+          setDias(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error fetching moratoria:', err);
+        if (isMounted) {
+          setError(true);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchDias();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [actaId]);
+
+  if (loading) {
+    return <span className="text-muted-foreground text-xs">Cargando...</span>;
+  }
+
+  if (error || dias === null) {
+    return <span className="text-muted-foreground text-xs">-</span>;
+  }
+
+  const isCritical = dias < 5;
+
+  return (
+    <div
+      className={`font-medium ${isCritical ? 'text-red-600' : 'text-green-600'}`}
+    >
+      {dias} días
+    </div>
+  );
+};
+
 // --- DEFINICIONES DE COLUMNAS ---
 
 const getStatusVariant = (status: ActaStatus) => {
@@ -226,20 +279,9 @@ export const columns: ColumnDef<Acta>[] = [
     },
   },
   {
-    accessorKey: 'diasRestantes',
+    accessorKey: 'fechaSuscripcion',
     header: 'Moratoria',
-    cell: ({ row }) => {
-      const dias = row.original.diasRestantes ?? 0;
-      const isCritical = dias < 5;
-
-      return (
-        <div
-          className={`font-medium ${isCritical ? 'text-red-600' : 'text-green-600'}`}
-        >
-          {dias} días
-        </div>
-      );
-    },
+    cell: ({ row }) => <MoratoriaCell actaId={row.original.id} />,
   },
   // ESTA ES LA ÚNICA DEFINICIÓN DE LA COLUMNA ACCIONES
   {

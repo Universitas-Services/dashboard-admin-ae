@@ -13,6 +13,11 @@ interface SendEmailResponse {
   statusCode?: number;
 }
 
+interface DiasRestantesResponse {
+  diasRestantes: number;
+  mensaje: string;
+}
+
 export const actasService = {
   /**
    * Obtiene estadísticas generales de actas
@@ -64,5 +69,13 @@ export const actasService = {
   getActaInfo: async (id: string): Promise<ActaInfoDetails> => {
     const response = await api.get<ActaInfoDetails>(`/actas/admin/${id}/info`);
     return response.data;
+  },
+
+  // 4. Obtener días restantes (Moratoria)
+  getDiasRestantes: async (id: string): Promise<number> => {
+    const response = await api.get<DiasRestantesResponse>(
+      `/actas/${id}/dias-restantes`
+    );
+    return response.data.diasRestantes;
   },
 };
