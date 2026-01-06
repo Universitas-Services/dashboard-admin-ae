@@ -13,6 +13,11 @@ interface SendEmailResponse {
   statusCode?: number;
 }
 
+interface DiasRestantesResponse {
+  diasRestantes: number;
+  mensaje: string;
+}
+
 export const actasService = {
   /**
    * Obtiene estadísticas generales de actas
@@ -41,7 +46,7 @@ export const actasService = {
     return response.data;
   },
 
-  // 1. Descargar DOCX (Blob)
+  // Descargar DOCX (Blob)
   downloadActaDocx: async (id: string): Promise<Blob> => {
     const response = await api.get(`/actas/${id}/descargar-docx`, {
       responseType: 'blob',
@@ -49,7 +54,7 @@ export const actasService = {
     return response.data;
   },
 
-  // 2. Enviar DOCX por correo
+  // Enviar DOCX por correo
   // CORRECCIÓN: Cambiamos Promise<any> por un tipo explícito o void
   sendActaDocx: async (id: string): Promise<SendEmailResponse> => {
     // Agregamos {} como body vacío para asegurar que la petición POST sea válida
@@ -60,9 +65,17 @@ export const actasService = {
     return response.data;
   },
 
-  // 3. Obtener información detallada de los involucrados (NUEVO)
+  // Obtener información detallada de los involucrados (NUEVO)
   getActaInfo: async (id: string): Promise<ActaInfoDetails> => {
     const response = await api.get<ActaInfoDetails>(`/actas/admin/${id}/info`);
     return response.data;
+  },
+
+  // Obtener días restantes (Moratoria)
+  getDiasRestantes: async (id: string): Promise<number> => {
+    const response = await api.get<DiasRestantesResponse>(
+      `/actas/${id}/dias-restantes`
+    );
+    return response.data.diasRestantes;
   },
 };

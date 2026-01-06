@@ -31,6 +31,7 @@ export interface Acta {
   tiempoRealizacion: number;
   diasRestantes?: number;
   alertaVencimiento?: boolean;
+  fechaSuscripcion?: string;
 }
 
 export interface PaginationMeta {
