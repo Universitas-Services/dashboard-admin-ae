@@ -72,12 +72,7 @@ export default function LoginForm() {
 
         <div className="space-y-2">
           <Label htmlFor="email">Correo Electrónico</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="admin@universitas.com"
-            {...form.register('email')}
-          />
+          <Input id="email" type="email" {...form.register('email')} />
           {form.formState.errors.email && (
             <p className="text-xs text-red-500">
               {form.formState.errors.email.message}
