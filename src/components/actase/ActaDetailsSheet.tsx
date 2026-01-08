@@ -94,7 +94,7 @@ export function ActaDetailsSheet({
       <SheetContent className="overflow-y-auto overflow-x-hidden w-[400px] sm:w-[600px] p-6 sm:p-8">
         <SheetHeader className="mb-8 space-y-2">
           <SheetTitle className="text-2xl font-bold text-primary">
-            Detalles del Acta
+            Detalles del acta
           </SheetTitle>
           <SheetDescription className="text-base">
             Información detallada de los involucrados en el acta{' '}
@@ -116,7 +116,7 @@ export function ActaDetailsSheet({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <User className="h-4 w-4" />
-                <h3>Datos del Usuario</h3>
+                <h3>Datos del usuario</h3>
               </div>
               <Separator />
               <div className="grid grid-cols-1">
@@ -128,7 +128,7 @@ export function ActaDetailsSheet({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <FileText className="h-4 w-4" />
-                <h3>Servidores Públicos</h3>
+                <h3>Servidores públicos</h3>
               </div>
               <Separator />
               <div className="grid grid-cols-2 gap-x-6 gap-y-6">
@@ -168,7 +168,7 @@ export function ActaDetailsSheet({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <Users className="h-4 w-4" />
-                <h3>Auditoría y Testigos</h3>
+                <h3>Auditor y testigo</h3>
               </div>
               <Separator />
               <div className="grid grid-cols-2 gap-x-6 gap-y-6">

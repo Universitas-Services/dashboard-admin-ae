@@ -121,7 +121,7 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
           }}
         >
           <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
-          Copiar Número
+          Copiar número
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
@@ -139,7 +139,7 @@ const ActionCell = ({ acta }: { acta: ActaCompliance }) => {
           className={isGuardada ? 'opacity-50 cursor-not-allowed' : ''}
         >
           <Send className="mr-2 h-4 w-4 text-green-600" />
-          Enviar por Correo
+          Enviar por correo
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -174,7 +174,7 @@ export const columns: ColumnDef<ActaCompliance>[] = [
   },
   {
     accessorKey: 'numeroCompliance',
-    header: 'Número de Acta',
+    header: 'Número de acta',
     cell: ({ row }) => (
       <div className="font-medium whitespace-nowrap">
         {row.getValue('numeroCompliance') || 'S/N'}
@@ -183,7 +183,7 @@ export const columns: ColumnDef<ActaCompliance>[] = [
   },
   {
     accessorKey: 'nombre_organo_entidad',
-    header: 'Nombre del Órgano',
+    header: 'Nombre del órgano',
     cell: ({ row }) => (
       <div
         className="max-w-[250px] truncate"

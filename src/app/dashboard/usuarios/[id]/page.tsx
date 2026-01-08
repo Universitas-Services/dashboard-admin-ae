@@ -171,7 +171,7 @@ export default function UserDetailsPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Detalles del Usuario
+            Detalles del usuario
           </h1>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Lock className="h-3 w-3" />
@@ -205,7 +205,7 @@ export default function UserDetailsPage() {
         <TabsContent value="perfil" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Información Personal e Institucional</CardTitle>
+              <CardTitle>Información personal e institucional</CardTitle>
               <CardDescription>
                 Los datos mostrados a continuación son inmutables.
               </CardDescription>
@@ -214,7 +214,7 @@ export default function UserDetailsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">
-                    Nombre Completo
+                    Nombre completo
                   </Label>
                   <Input
                     value={`${user.nombre} ${user.apellido || ''}`.trim()}
@@ -224,7 +224,7 @@ export default function UserDetailsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">
-                    Correo Electrónico
+                    Correo electrónico
                   </Label>
                   <Input
                     value={user.email}
@@ -236,16 +236,6 @@ export default function UserDetailsPage() {
                   <Label className="text-muted-foreground">Teléfono</Label>
                   <Input
                     value={user.telefono || 'No registrado'}
-                    disabled
-                    className="cursor-not-allowed bg-muted/50 font-medium text-foreground"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">
-                    Rol del Sistema
-                  </Label>
-                  <Input
-                    value={user.role}
                     disabled
                     className="cursor-not-allowed bg-muted/50 font-medium text-foreground"
                   />
@@ -278,7 +268,7 @@ export default function UserDetailsPage() {
         <TabsContent value="actas" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Historial de Actas</CardTitle>
+              <CardTitle>Historial de actas</CardTitle>
               <CardDescription>
                 Actas elaboradas asociadas a {user.nombre} {user.apellido}.
               </CardDescription>
@@ -300,7 +290,7 @@ export default function UserDetailsPage() {
         <TabsContent value="compliance" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Historial de Compliance</CardTitle>
+              <CardTitle>Historial de compliance</CardTitle>
               <CardDescription>
                 Evaluaciones de cumplimiento asociadas a {user.nombre}.
               </CardDescription>
@@ -323,7 +313,7 @@ export default function UserDetailsPage() {
         <TabsContent value="eliminar" className="mt-6">
           <Card className="border-red-200">
             <CardHeader className="bg-red-50/50">
-              <CardTitle className="text-red-600">Zona de Peligro</CardTitle>
+              <CardTitle className="text-red-600">Zona de peligro</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground mb-4">
@@ -334,7 +324,7 @@ export default function UserDetailsPage() {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar Cuenta
+                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar cuenta
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

@@ -90,7 +90,7 @@ export function ComplianceDetailsSheet({
       <SheetContent className="overflow-y-auto overflow-x-hidden w-[400px] sm:w-[600px] p-6 sm:p-8">
         <SheetHeader className="mb-8 space-y-2">
           <SheetTitle className="text-2xl font-bold text-primary">
-            Detalles de Compliance
+            Detalles de compliance
           </SheetTitle>
           <SheetDescription className="text-base">
             Información del evaluador para el acta{' '}
@@ -112,7 +112,7 @@ export function ComplianceDetailsSheet({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <User className="h-4 w-4" />
-                <h3>Datos del Usuario</h3>
+                <h3>Datos del usuario</h3>
               </div>
               <Separator />
               <div className="grid grid-cols-1">
@@ -124,7 +124,7 @@ export function ComplianceDetailsSheet({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <FileText className="h-4 w-4" />
-                <h3>Datos del Evaluador</h3>
+                <h3>Datos del evaluador</h3>
               </div>
               <Separator />
               {/* Grid de 2 columnas para consistencia visual */}
