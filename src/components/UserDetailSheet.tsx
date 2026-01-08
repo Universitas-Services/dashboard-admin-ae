@@ -121,7 +121,7 @@ export function UserDetailSheet({ userId }: UserDetailSheetProps) {
                 </h3>
                 <div className="grid gap-4">
                   <div className="space-y-1">
-                    <Label>Nombre Completo</Label>
+                    <Label>Nombre completo</Label>
                     {/* CORRECCIÓN 3: Usamos la variable construida */}
                     <Input
                       value={nombreCompleto}

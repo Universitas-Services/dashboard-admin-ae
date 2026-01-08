@@ -125,7 +125,7 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: 'createdAt',
-    header: 'Fecha Registro',
+    header: 'Fecha registro',
     cell: ({ row }) => {
       const date = new Date(row.getValue('createdAt'));
       return (

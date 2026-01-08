@@ -111,7 +111,7 @@ const ActaActionCell = ({ acta }: { acta: Acta }) => {
           className={isGuardada ? 'opacity-50 cursor-not-allowed' : ''}
         >
           <Send className="mr-2 h-4 w-4 text-green-600" />
-          Enviar por Correo
+          Enviar por correo
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -213,7 +213,7 @@ export const columns: ColumnDef<Acta>[] = [
   },
   {
     accessorKey: 'numeroActa',
-    header: 'Número de Acta',
+    header: 'Número de acta',
     cell: ({ row }) => (
       <div className="font-medium whitespace-nowrap">
         {row.original.numeroActa || 'S/N'}
@@ -222,7 +222,7 @@ export const columns: ColumnDef<Acta>[] = [
   },
   {
     accessorKey: 'nombreEntidad',
-    header: 'Nombre del Órgano',
+    header: 'Nombre del órgano',
     cell: ({ row }) => (
       <div
         className="max-w-[200px] truncate"
@@ -245,7 +245,7 @@ export const columns: ColumnDef<Acta>[] = [
   },
   {
     accessorKey: 'type',
-    header: 'Tipo de Acta',
+    header: 'Tipo de acta',
     cell: ({ row }) => {
       const type = row.getValue('type') as string;
       const formatted = type ? type.replace(/_/g, ' ').toLowerCase() : 'N/A';

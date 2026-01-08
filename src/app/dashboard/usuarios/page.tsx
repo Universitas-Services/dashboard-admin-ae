@@ -1,58 +1,61 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { adminService } from "@/services/adminService"
-import { User } from "@/types/user"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, Loader2 } from "lucide-react"
+import { useState, useEffect } from 'react';
+import { adminService } from '@/services/adminService';
+import { User } from '@/types/user';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Loader2 } from 'lucide-react';
 
 // Importamos los módulos nuevos
-import { DataTable } from "@/components/data-table"
-import { columns } from "@/components/columns"
+import { DataTable } from '@/components/data-table';
+import { columns } from '@/components/columns';
 
 export default function UsuariosPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalUsers, setTotalUsers] = useState(0)
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await adminService.getAllUsers({
         page,
         limit: 10,
         search: searchTerm || undefined,
-      })
-      setUsers(response.data)
-      setTotalPages(response.meta.totalPages)
-      setTotalUsers(response.meta.totalItems)
+      });
+      setUsers(response.data);
+      setTotalPages(response.meta.totalPages);
+      setTotalUsers(response.meta.totalItems);
     } catch (error) {
-      console.error(error)
-      toast.error("Error al cargar usuarios")
+      console.error(error);
+      toast.error('Error al cargar usuarios');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchUsers()
-    }, 500)
-    return () => clearTimeout(delayDebounceFn)
-  }, [page, searchTerm])
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, searchTerm]);
 
   return (
     <div className="flex flex-col gap-6 w-full p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Gestión de Usuarios</h2>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Gestión de usuarios
+          </h2>
           <p className="text-muted-foreground">
-            Administra los roles y accesos de los {totalUsers} usuarios registrados.
+            Administra los roles y accesos de los {totalUsers} usuarios
+            registrados.
           </p>
         </div>
       </div>
@@ -65,8 +68,8 @@ export default function UsuariosPage() {
             className="pl-8"
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(e.target.value)
-              setPage(1)
+              setSearchTerm(e.target.value);
+              setPage(1);
             }}
           />
         </div>
@@ -74,8 +77,8 @@ export default function UsuariosPage() {
 
       {loading ? (
         <div className="flex h-24 items-center justify-center rounded-md border bg-white">
-            <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-            <span>Cargando datos...</span>
+          <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+          <span>Cargando datos...</span>
         </div>
       ) : (
         /* AQUI USAMOS EL COMPONENTE MODULARIZADO */
@@ -98,12 +101,14 @@ export default function UsuariosPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage((old) => (!totalPages || old >= totalPages ? old : old + 1))}
+          onClick={() =>
+            setPage((old) => (!totalPages || old >= totalPages ? old : old + 1))
+          }
           disabled={page === totalPages || loading}
         >
           Siguiente
         </Button>
       </div>
     </div>
-  )
+  );
 }
