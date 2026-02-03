@@ -100,7 +100,7 @@ export function ComplianceChart({
   return (
     <Card className="flex flex-col shadow-sm">
       <CardHeader>
-        <CardTitle>Compliance acta de entrega</CardTitle>
+        <CardTitle>Actas de entrega - Compliance</CardTitle>
         <CardDescription>
           {currentMonth} - {currentYear}
         </CardDescription>
@@ -194,12 +194,13 @@ export function ComplianceChart({
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          Este mes los reportes son{' '}
-          {maxStatus?.label?.toLowerCase() || 'guardadas'}{' '}
+          Este mes la cantidad de reportes{' '}
+          {maxStatus?.label?.toLowerCase() || 'guardadas'} es:{' '}
+          {maxStatus?.valor || 0}{' '}
           <span className="text-muted-foreground">↗</span>
         </div>
         <div className="leading-none text-muted-foreground">
-          Compliances de actas de entrega
+          Actas de entrega - Compliance
         </div>
       </CardFooter>
     </Card>

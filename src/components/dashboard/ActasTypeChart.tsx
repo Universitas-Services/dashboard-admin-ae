@@ -116,11 +116,12 @@ export function ActasTypeChart({
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          El {percentage}% de las actas son de {maxType.tipo.toLowerCase()}{' '}
+          El {percentage}% de las actas corresponden a{' '}
+          {maxType.tipo.toLowerCase()}{' '}
           <span className="text-muted-foreground">↗</span>
         </div>
         <div className="leading-none text-muted-foreground">
-          Puedes verificar las actas realizadas por este mes
+          Puedes consultar las actas elaboradas este mes.
         </div>
       </CardFooter>
     </Card>
