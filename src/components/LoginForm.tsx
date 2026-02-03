@@ -59,7 +59,7 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Iniciar Sesión</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Iniciar sesión</h1>
         <p className="text-sm text-gray-500">Ingresa al panel administrativo</p>
       </div>
 
@@ -71,7 +71,7 @@ export default function LoginForm() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email">Correo Electrónico</Label>
+          <Label htmlFor="email">Correo electrónico</Label>
           <Input id="email" type="email" {...form.register('email')} />
           {form.formState.errors.email && (
             <p className="text-xs text-red-500">
