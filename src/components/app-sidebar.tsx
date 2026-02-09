@@ -11,6 +11,7 @@ import {
   ChevronsUpDown,
   FileText, // Icono para Panel de Actas
   ChevronRight, // Icono para la flecha desplegable
+  MessageSquare, // Icono para Chats
 } from 'lucide-react';
 
 import {
@@ -114,6 +115,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Link href="/dashboard/usuarios">
                     <Users />
                     <span>Panel de usuarios</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* NUEVO: Historial de Chats */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Historial de Chats">
+                  <Link href="/dashboard/chats">
+                    <MessageSquare />
+                    <span>Historial de Chats</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
