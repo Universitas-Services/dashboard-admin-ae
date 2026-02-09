@@ -74,9 +74,6 @@ export function ChatWindow({ chat, onBack, className }: ChatWindowProps) {
 
           <div>
             <h3 className="font-medium leading-none">{chat.user.name}</h3>
-            <span className="text-xs text-muted-foreground">
-              {chat.user.status === 'online' ? 'En línea' : 'Desconectado'}
-            </span>
           </div>
         </div>
       </div>

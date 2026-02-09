@@ -31,7 +31,7 @@ export function ChatMessageBubble({
         className={cn(
           'max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm',
           isMine
-            ? 'bg-primary text-primary-foreground rounded-br-none'
+            ? 'bg-chat-bubble text-chat-bubble-foreground rounded-br-none'
             : 'bg-muted text-foreground rounded-bl-none'
         )}
       >
@@ -39,7 +39,7 @@ export function ChatMessageBubble({
         <span
           className={cn(
             'mt-1 block text-[10px] opacity-70',
-            isMine ? 'text-primary-foreground/80' : 'text-muted-foreground'
+            isMine ? 'text-chat-bubble-foreground/80' : 'text-muted-foreground'
           )}
         >
           {new Date(message.timestamp).toLocaleTimeString([], {

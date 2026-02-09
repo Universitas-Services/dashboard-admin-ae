@@ -61,34 +61,21 @@ export function ChatSidebar({
                       {chat.user.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span
-                    className={cn(
-                      'absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background',
-                      chat.user.status === 'online'
-                        ? 'bg-green-500'
-                        : chat.user.status === 'busy'
-                          ? 'bg-red-500'
-                          : 'bg-slate-400'
-                    )}
-                  />
                 </div>
 
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium truncate">
+                <div className="flex-1 overflow-hidden text-left">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="font-medium text-sm truncate">
                       {chat.user.name}
                     </span>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">
                       {new Date(chat.lastMessageTime).toLocaleDateString()}
                     </span>
                   </div>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {chat.lastMessage}
+                  </p>
                 </div>
-
-                {chat.unreadCount > 0 && (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                    {chat.unreadCount}
-                  </div>
-                )}
               </button>
             ))}
           </div>
