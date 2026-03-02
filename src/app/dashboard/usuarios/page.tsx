@@ -10,11 +10,23 @@ import { Search, Loader2 } from 'lucide-react';
 // Importamos los módulos nuevos
 import { DataTable } from '@/components/data-table';
 import { columns } from '@/components/columns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+export type PlanFilter = 'TODOS' | 'GRATIS' | 'PAGO';
+export type StatusFilter = 'TODOS' | 'true' | 'false';
 
 export default function UsuariosPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tipoPlan, setTipoPlan] = useState<PlanFilter>('TODOS');
+  const [isActive, setIsActive] = useState<StatusFilter>('TODOS');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -28,6 +40,8 @@ export default function UsuariosPage() {
           page,
           limit,
           search: searchTerm || undefined,
+          tipoPlan: tipoPlan !== 'TODOS' ? tipoPlan : undefined,
+          isActive: isActive !== 'TODOS' ? isActive === 'true' : undefined,
         });
         setUsers(response.data);
         setTotalPages(
@@ -51,7 +65,7 @@ export default function UsuariosPage() {
       fetchUsers();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [page, limit, searchTerm]);
+  }, [page, limit, searchTerm, tipoPlan, isActive]);
 
   return (
     <div className="flex flex-col gap-6 w-full p-6">
@@ -67,11 +81,11 @@ export default function UsuariosPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por email..."
+            placeholder="Buscar por correo..."
             className="pl-8"
             value={searchTerm}
             onChange={(e) => {
@@ -80,6 +94,40 @@ export default function UsuariosPage() {
             }}
           />
         </div>
+
+        <Select
+          value={tipoPlan}
+          onValueChange={(value: PlanFilter) => {
+            setTipoPlan(value);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tipo de plan" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODOS">Todos los planes</SelectItem>
+            <SelectItem value="GRATIS">Gratis</SelectItem>
+            <SelectItem value="PAGO">Pago</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={isActive}
+          onValueChange={(value: StatusFilter) => {
+            setIsActive(value);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Estado de cuenta" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODOS">Todos los estados</SelectItem>
+            <SelectItem value="true">Activos</SelectItem>
+            <SelectItem value="false">Inactivos/Suspendidos</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
