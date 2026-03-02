@@ -22,6 +22,7 @@ export default function ActasCompliancePage() {
 
   // Estados para paginación y búsqueda
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +33,7 @@ export default function ActasCompliancePage() {
       setLoading(true);
       const response = await complianceService.getAllActasCompliance({
         page,
-        limit: 10,
+        limit,
         search: searchTerm || undefined, // Si está vacío, enviamos undefined
       });
 
@@ -55,7 +56,7 @@ export default function ActasCompliancePage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [page, searchTerm]);
+  }, [page, limit, searchTerm]);
 
   return (
     <div className="flex flex-col gap-6 p-6 w-full">
@@ -96,6 +97,11 @@ export default function ActasCompliancePage() {
       <DataTable
         columns={columns}
         data={data}
+        pageSize={limit}
+        onPageSizeChange={(sz) => {
+          setLimit(sz);
+          setPage(1);
+        }}
         pageCount={totalPages}
         currentPage={page}
         onPageChange={setPage}
