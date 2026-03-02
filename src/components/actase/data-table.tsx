@@ -132,57 +132,57 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
 
-      {/* Controles de Paginación */}
-      <div className="flex items-center justify-between py-4">
-        {/* Selector de límite de página */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Mostrar</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 data-[state=open]:bg-accent"
-              >
-                {pageSize} <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {[10, 20, 50, 100].map((size) => (
-                <DropdownMenuItem
-                  key={size}
-                  onClick={() => onPageSizeChange?.(size)}
+        {/* Controles de Paginación */}
+        <div className="flex items-center justify-between py-4 px-4 border-t">
+          {/* Selector de límite de página */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Mostrar</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 data-[state=open]:bg-accent"
                 >
-                  {size}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <span className="text-sm text-muted-foreground">filas</span>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1 || isLoading}
-          >
-            Anterior
-          </Button>
-          <div className="text-sm font-medium">
-            Página {currentPage} de {pageCount}
+                  {pageSize} <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {[10, 20, 50, 100].map((size) => (
+                  <DropdownMenuItem
+                    key={size}
+                    onClick={() => onPageSizeChange?.(size)}
+                  >
+                    {size}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="text-sm text-muted-foreground">filas</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= pageCount || isLoading}
-          >
-            Siguiente
-          </Button>
+
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1 || isLoading}
+            >
+              Anterior
+            </Button>
+            <div className="text-sm font-medium">
+              Página {currentPage} de {pageCount}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= pageCount || isLoading}
+            >
+              Siguiente
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { adminService } from '@/services/adminService';
 import { User } from '@/types/user';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2 } from 'lucide-react';
 
@@ -21,26 +20,26 @@ export default function UsuariosPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await adminService.getAllUsers({
-        page,
-        limit,
-        search: searchTerm || undefined,
-      });
-      setUsers(response.data);
-      setTotalPages(response.meta.totalPages);
-      setTotalUsers(response.meta.totalItems);
-    } catch (error) {
-      console.error(error);
-      toast.error('Error al cargar usuarios');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await adminService.getAllUsers({
+          page,
+          limit,
+          search: searchTerm || undefined,
+        });
+        setUsers(response.data);
+        setTotalPages(response.meta.totalPages);
+        setTotalUsers(response.meta.totalItems);
+      } catch (error) {
+        console.error(error);
+        toast.error('Error al cargar usuarios');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const delayDebounceFn = setTimeout(() => {
       fetchUsers();
     }, 500);
@@ -83,41 +82,22 @@ export default function UsuariosPage() {
         </div>
       ) : (
         /* AQUI USAMOS EL COMPONENTE MODULARIZADO */
-        <DataTable
-          columns={columns}
-          data={users}
-          pageSize={limit}
-          onPageSizeChange={(newSize) => {
-            setLimit(newSize);
-            setPage(1);
-          }}
-        />
-      )}
-
-      {/* Paginación (Se mantiene aquí porque controla el estado global de la página) */}
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setPage((old) => Math.max(old - 1, 1))}
-          disabled={page === 1 || loading}
-        >
-          Anterior
-        </Button>
-        <div className="text-sm text-muted-foreground">
-          Página {page} de {totalPages || 1}
+        <div className="rounded-md border bg-white shadow-sm overflow-hidden">
+          <DataTable
+            columns={columns}
+            data={users}
+            pageSize={limit}
+            onPageSizeChange={(newSize) => {
+              setLimit(newSize);
+              setPage(1);
+            }}
+            pageCount={totalPages}
+            currentPage={page}
+            onPageChange={setPage}
+            isLoading={loading}
+          />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            setPage((old) => (!totalPages || old >= totalPages ? old : old + 1))
-          }
-          disabled={page === totalPages || loading}
-        >
-          Siguiente
-        </Button>
-      </div>
+      )}
     </div>
   );
 }
