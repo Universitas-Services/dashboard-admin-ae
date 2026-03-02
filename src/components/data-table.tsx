@@ -5,6 +5,8 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  RowSelectionState,
+  OnChangeFn,
 } from '@tanstack/react-table';
 
 import {
@@ -33,6 +35,8 @@ interface DataTableProps<TData, TValue> {
   currentPage?: number;
   onPageChange?: (page: number) => void;
   isLoading?: boolean;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
 }
 
 export function DataTable<TData, TValue>({
@@ -44,12 +48,19 @@ export function DataTable<TData, TValue>({
   currentPage = 1,
   onPageChange,
   isLoading = false,
+  rowSelection = {},
+  onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange,
+    state: {
+      rowSelection,
+    },
+    getRowId: (row) => (row as { id: string | number }).id as string,
   });
 
   return (

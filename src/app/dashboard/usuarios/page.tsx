@@ -5,7 +5,9 @@ import { adminService } from '@/services/adminService';
 import { User } from '@/types/user';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, ShieldCheck, ShieldAlert, Ban } from 'lucide-react';
+import { RowSelectionState } from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
 
 // Importamos los módulos nuevos
 import { DataTable } from '@/components/data-table';
@@ -31,6 +33,11 @@ export default function UsuariosPage() {
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+
+  // Estados para acciones masivas
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [loadingBulk, setLoadingBulk] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -65,7 +72,56 @@ export default function UsuariosPage() {
       fetchUsers();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [page, limit, searchTerm, tipoPlan, isActive]);
+  }, [page, limit, searchTerm, tipoPlan, isActive, refreshTrigger]);
+
+  const selectedIds = Object.keys(rowSelection);
+  const selectedCount = selectedIds.length;
+
+  const handleBulkAction = async (
+    actionType: 'PAGO' | 'GRATIS' | 'SUSPENDER'
+  ) => {
+    if (selectedCount === 0) return;
+
+    setLoadingBulk(true);
+    const toastId = toast.loading(`Procesando ${selectedCount} usuarios...`);
+
+    try {
+      const promises = selectedIds.map((id) => {
+        if (actionType === 'PAGO') {
+          return adminService.updateUserRole(id, 'PAID_USER');
+        } else if (actionType === 'GRATIS') {
+          return adminService.updateUserRole(id, 'USER');
+        } else if (actionType === 'SUSPENDER') {
+          return adminService.updateUser(id, { isActive: false });
+        }
+      });
+
+      const results = await Promise.allSettled(promises);
+      const fulfilled = results.filter((r) => r.status === 'fulfilled').length;
+      const rejected = results.filter((r) => r.status === 'rejected').length;
+
+      toast.dismiss(toastId);
+
+      if (rejected === 0) {
+        toast.success(
+          `Acción masiva completada: ${fulfilled} usuarios actualizados.`
+        );
+      } else {
+        toast.warning(
+          `Completado con errores: ${fulfilled} exitosos, ${rejected} fallidos.`
+        );
+      }
+
+      setRowSelection({});
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (_error) {
+      console.error('Error processing bulk action:', _error);
+      toast.dismiss(toastId);
+      toast.error('Ocurrió un error inesperado al procesar acciones masivas.');
+    } finally {
+      setLoadingBulk(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 w-full p-6">
@@ -130,6 +186,44 @@ export default function UsuariosPage() {
         </Select>
       </div>
 
+      {/* Panel de Acciones Masivas */}
+      {selectedCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-md bg-muted/50">
+          <span className="text-sm font-medium">
+            {selectedCount} usuario(s) seleccionado(s)
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => handleBulkAction('PAGO')}
+              disabled={loadingBulk}
+            >
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Ascender a Pago
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBulkAction('GRATIS')}
+              disabled={loadingBulk}
+            >
+              <ShieldAlert className="mr-2 h-4 w-4" />
+              Descender a Gratis
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => handleBulkAction('SUSPENDER')}
+              disabled={loadingBulk}
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              Suspender
+            </Button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex h-24 items-center justify-center rounded-md border bg-white">
           <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
@@ -150,6 +244,8 @@ export default function UsuariosPage() {
             currentPage={page}
             onPageChange={setPage}
             isLoading={loading}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
           />
         </div>
       )}
