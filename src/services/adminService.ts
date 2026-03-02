@@ -64,6 +64,12 @@ export const adminService = {
     return response.data;
   },
 
+  // Activar usuario
+  toggleUserActive: async (id: string) => {
+    const response = await api.patch(`/admin/users/${id}/toggle-active`);
+    return response.data;
+  },
+
   // Actualizar rol de usuario
   updateUserRole: async (userId: string, newRole: string) => {
     const response = await api.patch<User>('/admin/users/role', {

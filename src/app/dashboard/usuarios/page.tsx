@@ -5,7 +5,14 @@ import { adminService } from '@/services/adminService';
 import { User } from '@/types/user';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, ShieldCheck, ShieldAlert, Ban } from 'lucide-react';
+import {
+  Search,
+  Loader2,
+  ShieldCheck,
+  ShieldAlert,
+  Ban,
+  UserCheck,
+} from 'lucide-react';
 import { RowSelectionState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 
@@ -78,7 +85,7 @@ export default function UsuariosPage() {
   const selectedCount = selectedIds.length;
 
   const handleBulkAction = async (
-    actionType: 'PAGO' | 'GRATIS' | 'SUSPENDER'
+    actionType: 'PAGO' | 'GRATIS' | 'SUSPENDER' | 'ACTIVAR'
   ) => {
     if (selectedCount === 0) return;
 
@@ -93,6 +100,8 @@ export default function UsuariosPage() {
           return adminService.updateUserRole(id, 'USER');
         } else if (actionType === 'SUSPENDER') {
           return adminService.deleteUser(id);
+        } else if (actionType === 'ACTIVAR') {
+          return adminService.toggleUserActive(id);
         }
       });
 
@@ -210,6 +219,16 @@ export default function UsuariosPage() {
             >
               <ShieldAlert className="mr-2 h-4 w-4" />
               Descender a Gratis
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+              onClick={() => handleBulkAction('ACTIVAR')}
+              disabled={loadingBulk}
+            >
+              <UserCheck className="mr-2 h-4 w-4" />
+              Activar
             </Button>
             <Button
               size="sm"
