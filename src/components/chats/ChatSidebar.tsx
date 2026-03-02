@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,6 +18,23 @@ export function ChatSidebar({
   onSelect,
   className,
 }: ChatSidebarProps) {
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  // Efecto de debounce para no filtrar por cada tecla instantáneamente
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 400); // 400ms de retraso
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Filtrado local de conversaciones por nombre de usuario
+  const filteredConversations = conversations.filter((chat) =>
+    chat.user.name.toLowerCase().includes(debouncedQuery.toLowerCase())
+  );
+
   return (
     <div
       className={cn(
@@ -29,7 +47,12 @@ export function ChatSidebar({
         <h2 className="text-lg font-semibold mb-4">Mensajes</h2>
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar chat..." className="pl-9" />
+          <Input
+            placeholder="Buscar chat..."
+            className="pl-9"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
       </div>
 
@@ -39,13 +62,13 @@ export function ChatSidebar({
           En la lista de archivos no vi scroll-area.tsx, así que usaré div native con clases de Tailwind.
       */}
       <div className="flex-1 overflow-y-auto">
-        {conversations.length === 0 ? (
+        {filteredConversations.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
-            No hay conversaciones.
+            No se encontraron conversaciones.
           </div>
         ) : (
           <div className="flex flex-col gap-1 p-2">
-            {conversations.map((chat) => (
+            {filteredConversations.map((chat) => (
               <button
                 key={chat.id}
                 onClick={() => onSelect(chat.id)}

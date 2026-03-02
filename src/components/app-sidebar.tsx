@@ -119,17 +119,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* NUEVO: Historial de Chats */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Historial de Chats">
-                  <Link href="/dashboard/chats">
-                    <MessageSquare />
-                    <span>Historial de Chats</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* NUEVO: Panel de Actas (Desplegable) */}
+              {/* Panel de Actas (Desplegable) */}
               <Collapsible asChild defaultOpen className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
@@ -142,16 +132,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       {/* Sub-item 1: Actas Creadas */}
-                      {/* Sub-item 1: NOMBRE ACTUALIZADO */}
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild>
                           <a href="/dashboard/actas-elaboradas">
-                            <span>Actas elaboradas</span> {/* Cambio aquí */}
+                            <span>Actas elaboradas</span>
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-
-                      {/* Sub-item 2: Actas Compliance */}
 
                       {/* Sub-item 2: Actas Compliance */}
                       <SidebarMenuSubItem>
@@ -165,6 +152,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              {/* Historial de Chats (Movido al final) */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Historial de Chats">
+                  <Link href="/dashboard/chats">
+                    <MessageSquare />
+                    <span>Historial de Chats</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
