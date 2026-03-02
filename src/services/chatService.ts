@@ -19,11 +19,22 @@ class ChatService {
   }
 
   // Obtener lista de usuarios (conversaciones)
-  public async getConversations(): Promise<ChatConversation[]> {
+  public async getConversations(
+    page = 1,
+    limit = 10,
+    search?: string
+  ): Promise<ChatConversation[]> {
     try {
-      const { data } = await api.get<ApiChatUser[]>('/ai/admin/users');
+      const { data } = await api.get('/ai/admin/users', {
+        params: { page, limit, search: search || undefined },
+      });
 
-      return data.map((apiUser) => ({
+      // Compatibilidad con objeto paginado o array directo
+      const usersData: ApiChatUser[] = Array.isArray(data)
+        ? data
+        : data?.data || data?.users || data?.items || [];
+
+      return usersData.map((apiUser) => ({
         id: apiUser.id,
         user: {
           id: apiUser.id,

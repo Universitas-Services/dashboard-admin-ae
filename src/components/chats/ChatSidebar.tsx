@@ -9,6 +9,7 @@ interface ChatSidebarProps {
   conversations: ChatConversation[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onSearch?: (search: string) => void;
   className?: string; // Para control de responsividad desde el padre
 }
 
@@ -16,24 +17,21 @@ export function ChatSidebar({
   conversations,
   selectedId,
   onSelect,
+  onSearch,
   className,
 }: ChatSidebarProps) {
   const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  // Efecto de debounce para no filtrar por cada tecla instantáneamente
+  // Efecto de debounce para delegar la búsqueda al padre (llama al backend)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(query);
+      if (onSearch) {
+        onSearch(query);
+      }
     }, 400); // 400ms de retraso
 
     return () => clearTimeout(timer);
-  }, [query]);
-
-  // Filtrado local de conversaciones por nombre de usuario
-  const filteredConversations = conversations.filter((chat) =>
-    chat.user.name.toLowerCase().includes(debouncedQuery.toLowerCase())
-  );
+  }, [query, onSearch]);
 
   return (
     <div
@@ -62,13 +60,13 @@ export function ChatSidebar({
           En la lista de archivos no vi scroll-area.tsx, así que usaré div native con clases de Tailwind.
       */}
       <div className="flex-1 overflow-y-auto">
-        {filteredConversations.length === 0 ? (
+        {conversations.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             No se encontraron conversaciones.
           </div>
         ) : (
           <div className="flex flex-col gap-1 p-2">
-            {filteredConversations.map((chat) => (
+            {conversations.map((chat) => (
               <button
                 key={chat.id}
                 onClick={() => onSelect(chat.id)}

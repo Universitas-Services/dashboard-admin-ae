@@ -10,19 +10,20 @@ import { cn } from '@/lib/utils';
 export default function ChatsPage() {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Cargar conversaciones al montar
+  // Cargar conversaciones al montar o al buscar
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const data = await chatService.getConversations();
+        const data = await chatService.getConversations(1, 10, searchQuery);
         setConversations(data);
       } catch (error) {
         console.error('Failed to fetch conversations', error);
       }
     };
     fetchConversations();
-  }, []);
+  }, [searchQuery]);
 
   const selectedChat =
     conversations.find((c) => c.id === selectedChatId) || null;
@@ -47,6 +48,7 @@ export default function ChatsPage() {
           conversations={conversations}
           selectedId={selectedChatId}
           onSelect={setSelectedChatId}
+          onSearch={setSearchQuery}
           className="h-full"
         />
       </div>
