@@ -92,7 +92,7 @@ export default function UsuariosPage() {
         } else if (actionType === 'GRATIS') {
           return adminService.updateUserRole(id, 'USER');
         } else if (actionType === 'SUSPENDER') {
-          return adminService.updateUser(id, { isActive: false });
+          return adminService.deleteUser(id);
         }
       });
 
