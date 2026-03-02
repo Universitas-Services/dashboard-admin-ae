@@ -27,29 +27,35 @@ export default function ActasCompliancePage() {
   const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Función para cargar los datos
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await complianceService.getAllActasCompliance({
-        page,
-        limit,
-        search: searchTerm || undefined, // Si está vacío, enviamos undefined
-      });
-
-      setData(response.data);
-      setTotalPages(response.meta.totalPages);
-      setTotalItems(response.meta.totalItems);
-    } catch (error) {
-      console.error(error);
-      toast.error('Error al cargar el historial de compliance');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Effect: Cargar datos al iniciar o cambiar página/búsqueda
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await complianceService.getAllActasCompliance({
+          page,
+          limit,
+          search: searchTerm || undefined,
+        });
+
+        setData(response.data);
+        setTotalPages(
+          response.meta?.totalPages ||
+            (response.meta?.totalItems
+              ? Math.ceil(response.meta.totalItems / limit)
+              : response.data.length === limit
+                ? page + 1
+                : page)
+        );
+        setTotalItems(response.meta?.totalItems || 0);
+      } catch (error) {
+        console.error(error);
+        toast.error('Error al cargar el historial de compliance');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     // Debounce para la búsqueda (esperar a que el usuario termine de escribir)
     const timer = setTimeout(() => {
       fetchData();

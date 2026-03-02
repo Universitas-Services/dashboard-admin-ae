@@ -141,7 +141,7 @@ export function DataTable<TData, TValue>({
                 Anterior
               </Button>
               <div className="text-sm font-medium">
-                Página {currentPage} de {pageCount}
+                Página {currentPage} de {pageCount || 1}
               </div>
               <Button
                 variant="outline"

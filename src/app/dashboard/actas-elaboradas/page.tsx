@@ -43,8 +43,15 @@ export default function ActasCreadasPage() {
         });
 
         setData(response.data);
-        setTotalPages(response.meta.totalPages);
-        setTotalItems(response.meta.totalItems);
+        setTotalPages(
+          response.meta?.totalPages ||
+            (response.meta?.totalItems
+              ? Math.ceil(response.meta.totalItems / limit)
+              : response.data.length === limit
+                ? currentPage + 1
+                : currentPage)
+        );
+        setTotalItems(response.meta?.totalItems || 0);
       } catch (error) {
         console.error('Error fetching actas:', error);
         toast.error('Error al cargar las actas');

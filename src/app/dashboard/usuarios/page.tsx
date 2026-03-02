@@ -30,8 +30,15 @@ export default function UsuariosPage() {
           search: searchTerm || undefined,
         });
         setUsers(response.data);
-        setTotalPages(response.meta.totalPages);
-        setTotalUsers(response.meta.totalItems);
+        setTotalPages(
+          response.meta?.totalPages ||
+            (response.meta?.totalItems
+              ? Math.ceil(response.meta.totalItems / limit)
+              : response.data.length === limit
+                ? page + 1
+                : page)
+        );
+        setTotalUsers(response.meta?.totalItems || 0);
       } catch (error) {
         console.error(error);
         toast.error('Error al cargar usuarios');

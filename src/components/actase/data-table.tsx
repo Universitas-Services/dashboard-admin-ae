@@ -166,13 +166,13 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(currentPage - 1)}
+              onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
               disabled={currentPage <= 1 || isLoading}
             >
               Anterior
             </Button>
             <div className="text-sm font-medium">
-              Página {currentPage} de {pageCount}
+              Página {currentPage} de {pageCount || 1}
             </div>
             <Button
               variant="outline"
