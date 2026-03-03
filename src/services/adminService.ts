@@ -8,6 +8,8 @@ export interface GetUsersParams {
   page?: number;
   limit?: number;
   search?: string;
+  tipoPlan?: 'GRATIS' | 'PAGO' | 'TODOS';
+  isActive?: boolean | 'TODOS';
 }
 
 // Estructura de respuesta paginada (asumimos que es similar a la de Actas)
@@ -23,10 +25,25 @@ export interface UsersResponse {
 }
 
 export const adminService = {
-  // 2. CORRECCIÓN: Ahora acepta 'params' opcionales
+  // 2. CORRECCIÓN: Ahora acepta 'params' opcionales y los limpia antes de enviar
   getAllUsers: async (params?: GetUsersParams): Promise<UsersResponse> => {
-    // Pasamos los params a la petición axios
-    const response = await api.get<UsersResponse>('/admin/users', { params });
+    // Limpiar params de valores vacíos o 'TODOS'
+    const cleanParams: Record<string, string | number | boolean> = {};
+    if (params) {
+      if (params.page !== undefined) cleanParams.page = params.page;
+      if (params.limit !== undefined) cleanParams.limit = params.limit;
+      if (params.search && params.search.trim() !== '')
+        cleanParams.search = params.search;
+      if (params.tipoPlan && params.tipoPlan !== 'TODOS')
+        cleanParams.tipoPlan = params.tipoPlan;
+      if (params.isActive !== undefined && params.isActive !== 'TODOS')
+        cleanParams.isActive = params.isActive;
+    }
+
+    // Pasamos los cleanParams a la petición axios
+    const response = await api.get<UsersResponse>('/admin/users', {
+      params: cleanParams,
+    });
     return response.data;
   },
 
@@ -44,6 +61,12 @@ export const adminService = {
   // Cambiamos el endpoint a /users/admin/{id} según tu requerimiento explícito
   deleteUser: async (id: string) => {
     const response = await api.delete(`/users/admin/${id}`);
+    return response.data;
+  },
+
+  // Activar usuario
+  toggleUserActive: async (id: string) => {
+    const response = await api.patch(`/admin/users/${id}/toggle-active`);
     return response.data;
   },
 

@@ -15,6 +15,7 @@ export default function ActasCreadasPage() {
 
   // Estados de paginación y filtro
   const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,14 +37,21 @@ export default function ActasCreadasPage() {
       try {
         const response = await actasService.getAllActasAdmin({
           page: currentPage,
-          limit: 10,
+          limit,
           search: debouncedSearch,
           // status: 'COMPLETADA' // Descomentar si quieres filtrar por defecto
         });
 
         setData(response.data);
-        setTotalPages(response.meta.totalPages);
-        setTotalItems(response.meta.totalItems);
+        setTotalPages(
+          response.meta?.totalPages ||
+            (response.meta?.totalItems
+              ? Math.ceil(response.meta.totalItems / limit)
+              : response.data.length === limit
+                ? currentPage + 1
+                : currentPage)
+        );
+        setTotalItems(response.meta?.totalItems || 0);
       } catch (error) {
         console.error('Error fetching actas:', error);
         toast.error('Error al cargar las actas');
@@ -53,7 +61,7 @@ export default function ActasCreadasPage() {
     };
 
     fetchActas();
-  }, [currentPage, debouncedSearch]);
+  }, [currentPage, limit, debouncedSearch]);
 
   // Resetear a página 1 cuando se busca
   useEffect(() => {
@@ -93,6 +101,11 @@ export default function ActasCreadasPage() {
         <DataTable
           columns={columns}
           data={data}
+          pageSize={limit}
+          onPageSizeChange={(sz) => {
+            setLimit(sz);
+            setCurrentPage(1);
+          }}
           pageCount={totalPages}
           currentPage={currentPage}
           onPageChange={setCurrentPage}

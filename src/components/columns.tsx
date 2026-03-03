@@ -8,6 +8,7 @@ import { FaEye } from 'react-icons/fa'; // Icono del ojo
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,7 +112,26 @@ const ActionCell = ({ user }: { user: User }) => {
 
 // --- DEFINICIÓN DE COLUMNAS (Se mantiene igual, solo exportamos la corrección de ActionCell) ---
 export const columns: ColumnDef<User>[] = [
-  // ... (Tus columnas anteriores: email, role, etc. se quedan IGUAL) ...
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Seleccionar todos"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Seleccionar fila"
+      />
+    ),
+  },
   {
     accessorKey: 'email',
     header: 'Usuario',

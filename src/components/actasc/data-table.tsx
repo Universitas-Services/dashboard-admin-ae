@@ -17,11 +17,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
   pageCount?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
@@ -31,6 +39,8 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
+  pageSize = 10,
+  onPageSizeChange,
   pageCount = 1,
   currentPage = 1,
   onPageChange,
@@ -114,29 +124,58 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
 
-      {/* Controles de Paginación */}
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange?.(Math.max(currentPage - 1, 1))}
-          disabled={currentPage === 1 || isLoading}
-        >
-          Anterior
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          Página {currentPage} de {pageCount || 1}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange?.(currentPage + 1)}
-          disabled={currentPage >= pageCount || isLoading}
-        >
-          Siguiente
-        </Button>
+        {/* Controles de Paginación */}
+        <div className="flex items-center justify-between py-4 px-4 border-t">
+          {/* Selector de límite de página */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Mostrar</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 data-[state=open]:bg-accent"
+                >
+                  {pageSize} <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {[10, 20, 50, 100].map((size) => (
+                  <DropdownMenuItem
+                    key={size}
+                    onClick={() => onPageSizeChange?.(size)}
+                  >
+                    {size}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="text-sm text-muted-foreground">filas</span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange?.(Math.max(currentPage - 1, 1))}
+              disabled={currentPage === 1 || isLoading}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {currentPage} de {pageCount || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange?.(currentPage + 1)}
+              disabled={currentPage >= pageCount || isLoading}
+            >
+              Siguiente
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
